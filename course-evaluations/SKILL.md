@@ -32,10 +32,10 @@ Detect the appropriate mode from context. If ambiguous, ask.
 Claude.ai allows a maximum of 20 file attachments per message. For Mode B, which typically involves 25–35 CSV files, instruct the user to put all CSVs in a zip archive and upload the zip as a single attachment. The skill's bash command handles unzipping automatically.
 
 The time period is inferred from the CSV files themselves — the script's term auto-detection covers this. Before running the script in Mode B, ask the user:
-1. Should the report be organized by course, by curriculum level (intro / core / elective), or both?
-2. Are there specific courses or changes the instructor wants to highlight?
+1. Which courses are most central to the promotion case? (This determines how much narrative depth each course gets.)
+2. Are there any known inflection points to highlight — a course revision, a new course added to the portfolio, a change in teaching approach?
 
-These answers shape the report structure before a single line is written.
+These answers shape the report's narrative arc before a single line is written. If the user has no specific highlights, proceed with the default structure (course-level narratives ordered by curriculum level).
 
 ## File format
 
@@ -153,7 +153,8 @@ While reading, hold these questions in mind:
 - **Is this about external constraints?** Class-period length, departmental curriculum, exam policies, tooling choices — flag these so the instructor knows what they can and can't act on.
 - **What specifics are named?** Named tools, TAs, specific assignments, particular topics, pacing locations. These are far more actionable than generic feedback.
 - **What's the experience-level mix?** Intro courses especially get split feedback because students arrive with different backgrounds. Watch for "too fast / too slow" appearing simultaneously — that's usually about student variance, not pacing.
-- **Are comments attributing things to the instructor vs. the course?** Students sometimes praise the instructor while criticizing the course design. Keep that distinction alive as you read.
+- **Are comments attributing things to the instructor vs. the course?** Students sometimes praise the instructor while criticizing the course design. Keep that distinction alive as you read. Note that pedagogical methodology choices (e.g., active-learning structures, group work formats) are course-design decisions and fall within the permitted framing for both modes.
+- **Is Q6 or Q7 among the lowest items?** Q6 (helpful feedback on student performance) and Q7 (effective outside class) are directly connected to feedback practices and responsiveness. When either is notably low, check comments specifically for grading timeliness, feedback quality, or office-hours availability — these are highly actionable.
 - **(Mode B only) What changed between terms?** Look for the same friction appearing in early terms and disappearing later, or new positives emerging after a likely course revision. That trajectory is the evidence.
 
 ### 3. Write the report
@@ -173,10 +174,15 @@ handled, whether multiple sections share an instructor.>
 ## Quantitative snapshot
 
 <Markdown table: one row per section, columns for N, each Likert mean,
-and overall ratings. Bold the two overall-rating columns.>
+and overall ratings. Bold Q13, Q14, and the 1–2 lowest-scoring Likert
+items per section — these are what the instructor should notice first.
+Omit the Scale column when all sections share the same scale; if old-
+scale sections are present, note the normalization in the framing text
+instead.>
 
-<2–3 bullet observations from the numbers alone: flag the lowest-rated
-items across sections; acknowledge sample size. Skip obvious platitudes.>
+<1–2 sentences on what the numbers show: flag the lowest items across
+sections and any sections where N is small enough to warrant a caveat.
+Skip obvious platitudes.>
 
 ## Per-course themes
 
@@ -211,7 +217,16 @@ actionable.>
 
 **Unique signals worth noting.** <1–2 high-signal one-off observations
 that don't repeat but are worth surfacing.>
+
+<If all data is from a single term, close with one sentence flagging
+this: "This report covers one semester; these patterns are worth watching
+but should be confirmed across future terms before acting on them as
+settled findings.">
 ```
+
+The course summary table (second table from the script) is not useful in
+single-term Mode A runs — skip it. Use it only when Mode A spans multiple
+terms and the aggregated view adds something the per-section table doesn't.
 
 End with a single offer of a follow-up (e.g., per-section action items, full comment listing, or thematic breakdown) — one line only.
 
@@ -259,8 +274,10 @@ strengths the instructor has maintained.
 
 **Frictions and how they evolved.** 2–4 sentences. Name the specific
 issue, which terms it appeared, and — if it diminished or resolved —
-what likely changed. If a friction is ongoing, say so. Distinguish
-course-design issues from things outside the instructor's control.
+what likely changed. If a friction persisted throughout the review
+period without resolution, say so directly rather than implying change
+that didn't occur. Distinguish course-design issues from things outside
+the instructor's control.
 
 **Notable trajectory.** 1–2 sentences if applicable. A consistent
 improvement over time, a persistent unresolved issue, or a split that
@@ -309,7 +326,7 @@ These apply to both modes.
 With N=12–24, a 0.1 gap between sections is meaningless and a 0.3 gap is suggestive at best. Report the means; don't rank sections by tiny differences. The exception is when *every item* in one section trends lower than another — that's a real pattern even if no single gap is large.
 
 **Treat the lowest individual items as the highest signal.**
-A section with a 4.5 instructor rating and a 3.3 on Q11 (exams reflect objectives) is telling you something specific. The overall rating averages over everything; the individual items localize the issue. Always look at the lowest 2–3 individual items per section.
+Bolding them in the table draws the eye; the prose should explain what they mean. A section with a 4.5 instructor rating and a 3.3 on Q11 (exams reflect objectives) is telling you something specific that the overall rating averages away. Always look at the lowest 2–3 individual items per section and connect them to the qualitative comments before writing the per-course themes.
 
 **Contextualize against non-teaching factors.**
 Research consistently shows that intro and required courses rate lower than upper-division electives independent of teaching quality; larger classes tend to rate lower than small ones; and grade expectations correlate with ratings. Before attributing a gap to teaching, note structural differences that could explain it. This is especially important in Mode B, where a promotion committee might compare intro and elective scores directly.
@@ -363,7 +380,7 @@ The following is a *hypothetical* illustration of the target voice — not based
 
 ---
 
-**Output excerpt illustrating Mode B voice** (same courses, now imagined across 5 years):
+**Output excerpt illustrating Mode B voice** (same courses, now imagined across 5 years; Q3–Q12 values for pre-Fall 2022 sections are normalized to the current 1–4 scale):
 
 > **CS 149 — Introduction to Programming (intro, required for CS majors).** Taught 9 times over the review period, total N=201. Q11 (exams reflect objectives) was the lowest-rated item in six of those nine terms, consistently in the 3.1–3.4 range through Spring 2022. Student comments in Q16 during that period describe the exams as emphasizing syntax recall over problem-solving, which did not match how the labs and assignments were structured. Q11 scores rise to 3.7–3.9 beginning Fall 2022 and comments about exam alignment largely disappear, suggesting a revision to assessment design. Assignment value (Q9) has remained among the highest-rated items throughout the review period, with students in nearly every term naming the weekly lab exercises as the most useful part of the course.
 
