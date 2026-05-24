@@ -15,6 +15,7 @@ Robustness notes:
 """
 
 import sys
+import re
 import argparse
 import glob
 from pathlib import Path
@@ -89,6 +90,34 @@ def is_meaningful_text(value) -> bool:
     if text.upper() in {"D/A", "N/A", "NA"}:
         return False
     return True
+
+
+SEASON_ORDER = {"Spring": 1, "Summer": 2, "Fall": 3}
+_SECTION_ID_RE = re.compile(r"^([A-Za-z]+)\s*(\d+)\s*[-_ ]\s*(\d+)")
+
+
+def sort_key(result: dict) -> tuple:
+    """
+    Order results first by term (chronologically), then by department prefix,
+    then by course number, then by section number. Unparseable values sort
+    last so they don't get lost in the middle of the report.
+    """
+    term = result["term"]
+    parts = term.split()
+    if len(parts) == 2 and parts[0] in SEASON_ORDER and parts[1].isdigit():
+        term_key = (int(parts[1]), SEASON_ORDER[parts[0]])
+    else:
+        term_key = (9999, 9)  # "Unknown term" -> end
+
+    m = _SECTION_ID_RE.match(result["section_id"])
+    if m:
+        dept = m.group(1).upper()
+        course_num = int(m.group(2))
+        section_num = int(m.group(3))
+    else:
+        dept, course_num, section_num = "ZZZZ", 99999, 99999
+
+    return (term_key, dept, course_num, section_num)
 
 
 def analyze_file(path: Path) -> dict:
@@ -223,6 +252,9 @@ def main():
     if not results:
         print("No CSVs could be read.", file=sys.stderr)
         sys.exit(1)
+
+    # Order by term (chronologically), then dept, then course number, then section.
+    results.sort(key=sort_key)
 
     print_means_table(results)
     print_comments(results)

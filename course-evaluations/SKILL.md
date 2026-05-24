@@ -58,6 +58,8 @@ It prints two things to stdout:
 - A means table across all sections (one row per file) with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings flagged.
 - A grouped dump of all Q15 (strengths) and Q16 (improvements) free-text responses per section, headed by both the section ID and the detected term.
 
+The script sorts its output by term (chronologically: earlier semesters first), then by department prefix, then by course number, then by section number. **Preserve this order** in both the snapshot table and the per-course narrative — don't re-order sections by rating, file upload order, or perceived importance. Consistent ordering makes term-over-term comparisons readable.
+
 Because the term is detected per-file, a single run can ingest evaluations from any combination of semesters, and the report should organize per-course themes by term so trends across semesters are visible.
 
 If the user uploaded files with different naming conventions, the script still works — it parses each file independently. If a column it expects is missing, it warns and skips that item rather than failing. If `FilloutDate` is missing or malformed, the term is reported as "Unknown term" and you should ask the user how to label it before writing the report.
