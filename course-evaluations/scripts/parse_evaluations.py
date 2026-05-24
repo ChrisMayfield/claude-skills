@@ -256,12 +256,14 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
 
         numeric = pd.to_numeric(raw, errors="coerce")
 
-        # On old-scale Q3-Q12, a numeric value of 1 means "No Basis to Judge"
-        # and should be excluded from means, just as D/A is. Q13-Q14 use a
-        # fixed 1-5 quality scale in all eras, so "1" there is a valid rating.
+        # On old-scale Q3-Q12, subtract 1 to normalize to the new 1-4 range:
+        #   old 2→1 (Strongly Disagree), 3→2, 4→3, 5→4 (Strongly Agree)
+        #   old 1 (No Basis to Judge) → 0, then excluded like D/A.
+        # Q13-Q14 use a fixed 1-5 quality scale in all eras; no adjustment needed.
         if scale == "old" and not is_overall:
-            nb = int((numeric == 1).sum())
-            numeric = numeric.where(numeric != 1)   # replace 1s with NaN
+            nb = int((numeric == 1).sum())   # count No Basis before shifting
+            numeric = numeric - 1
+            numeric = numeric.where(numeric > 0)  # exclude the 0s (were No Basis)
         else:
             nb = 0
 
@@ -305,26 +307,16 @@ def print_means_table(results: list[dict]) -> None:
     """Print the per-section quantitative summary table."""
     has_rr      = any(r["response_rate"] is not None for r in results)
     has_old     = any(r["scale"] == "old" for r in results)
-    has_new     = any(r["scale"] == "new" for r in results)
-    mixed_eras  = has_old and has_new
 
     print("=" * 78)
     print("QUANTITATIVE SUMMARY — PER SECTION")
     print("=" * 78)
-    if has_new:
-        print("New scale (Fall 2022+) — Q3-Q12: 1=Strongly Disagree, 2=Somewhat Disagree,")
-        print("                                  3=Somewhat Agree, 4=Strongly Agree")
+    print("Q3-Q12: 1=Strongly Disagree, 2=Somewhat Disagree, 3=Somewhat Agree, 4=Strongly Agree")
     if has_old:
-        print("Old scale (pre-Fall 2022) — Q3-Q12: 2=Strongly Disagree, 3=Somewhat Disagree,")
-        print("                                     4=Somewhat Agree, 5=Strongly Agree")
-        print("                            (1=No Basis to Judge, excluded from means; shown as NB)")
+        print("        (old-scale sections normalized: original 2-5 mapped to 1-4;")
+        print("         original 1=No Basis to Judge excluded, shown as NB)")
     print("Q13-Q14 (all eras): 1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent")
-    print("D/A responses excluded from means.")
-    if mixed_eras:
-        print()
-        print("** MIXED ERAS: Q3-Q12 means are on different scales and cannot be")
-        print("   compared directly across the Fall 2022 boundary. Q13-Q14 are comparable.")
-    print("Term auto-detected from modal FilloutDate.")
+    print("D/A responses excluded from means. Term auto-detected from modal FilloutDate.")
     if has_rr:
         print(f"RR% = response rate (respondents / enrolled)."
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}% threshold.")
@@ -337,9 +329,8 @@ def print_means_table(results: list[dict]) -> None:
     print("\t".join(headers))
 
     for r in results:
-        # Display scale as the effective range so the reader sees immediately
-        # what the numbers mean.
-        scale_label = "1-4" if r["scale"] == "new" else "2-5†"
+        # Label old-scale sections to show normalization was applied.
+        scale_label = "1-4" if r["scale"] == "new" else "1-4†"
         row = [r["section_id"], r["term"], scale_label, str(r["n_total"])]
         if has_rr:
             row.append(str(r["enrolled"]) if r["enrolled"] is not None else "—")
@@ -350,7 +341,7 @@ def print_means_table(results: list[dict]) -> None:
         print("\t".join(row))
 
     if has_old:
-        print("\n† Old scale: Q3-Q12 effective range is 2-5 (1=No Basis excluded).")
+        print("\n† Normalized from old scale: original 2-5 mapped to 1-4; original 1 (No Basis) excluded.")
 
     if has_rr:
         low_rr = [r for r in results
@@ -416,7 +407,7 @@ def print_course_summary_table(results: list[dict]) -> None:
     print("=" * 78)
     print("Q13 and Q14 means are weighted by number of respondents per section.")
     print("D/A and No Basis responses excluded from means.")
-    print("* = sections from both scale eras present; Q3-Q12 means not cross-comparable.")
+    print("† = old-scale sections normalized (original 2-5 mapped to 1-4).")
     if has_rr:
         print(f"Pooled RR% = total respondents / total enrolled across all sections."
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}%.")
@@ -437,12 +428,11 @@ def print_course_summary_table(results: list[dict]) -> None:
         term_range = terms[0] if len(terms) == 1 else f"{terms[0]} – {terms[-1]}"
 
         scales_present = {r["scale"] for r in sections}
-        if scales_present == {"old"}:
-            scale_label = "2-5†"
-        elif scales_present == {"new"}:
+        if scales_present == {"new"}:
             scale_label = "1-4"
         else:
-            scale_label = "mixed *"   # has sections from both eras
+            # Any old-scale sections were normalized; flag with † for transparency.
+            scale_label = "1-4†"
 
         n_sections = len(sections)
         total_n    = sum(r["n_total"] for r in sections)
@@ -488,7 +478,7 @@ def print_comments(results: list[dict]) -> None:
         else:
             rr_note = ""
 
-        scale_note = "" if r["scale"] == "new" else "  [old scale: Q3-Q12 range 2-5]"
+        scale_note = "" if r["scale"] == "new" else "  [Q3-Q12 normalized from old scale]"
         label = f"{r['section_id']} — {r['term']}{scale_note}{rr_note}"
 
         print("\n" + "=" * 78)

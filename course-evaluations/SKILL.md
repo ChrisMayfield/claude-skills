@@ -68,18 +68,18 @@ The provided script renames these by substring match, so it stays robust if a fu
 The Q3–Q12 scale changed in Fall 2022. The script auto-detects which scale applies to each CSV by checking for the presence of the `EnrollmentType` column.
 
 **Pre-Fall 2022 (old scale — no `EnrollmentType` column):**
-- Q3–Q12: 1 = No Basis to Judge, 2 = Strongly Disagree, 3 = Somewhat Disagree, 4 = Somewhat Agree, 5 = Strongly Agree
-- "No Basis to Judge" (value 1) is excluded from means, just like D/A. The effective range is 2–5.
-- The script labels these rows `2-5†` in the Scale column.
+- Q3–Q12 original: 1 = No Basis to Judge, 2 = Strongly Disagree, 3 = Somewhat Disagree, 4 = Somewhat Agree, 5 = Strongly Agree
+- The script normalizes these by subtracting 1: old 2→1, 3→2, 4→3, 5→4. Old 1 (No Basis to Judge) becomes 0 and is excluded from means, just like D/A.
+- After normalization, old-scale means are on the same 1–4 range as new-scale means and are directly comparable.
+- The script labels these rows `1-4†` in the Scale column.
 
 **Fall 2022 and later (new scale — `EnrollmentType` column present):**
-- Q3–Q12: 1 = Strongly Disagree, 2 = Somewhat Disagree, 3 = Somewhat Agree, 4 = Strongly Agree
-- All values 1–4 are valid; "1" is not excluded.
+- Q3–Q12: 1 = Strongly Disagree, 2 = Somewhat Disagree, 3 = Somewhat Agree, 4 = Strongly Agree. No adjustment needed.
 - The script labels these rows `1-4` in the Scale column.
 
-**Q13–Q14 (all eras):** 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent. This scale did not change and is directly comparable across all time periods.
+**Q13–Q14 (all eras):** 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent. This scale did not change and requires no normalization.
 
-**Cross-era comparison of Q3–Q12 means is not valid.** A mean of 4.5 on the old scale and a mean of 3.5 on the new scale cannot be directly compared — they are on different numeric ranges with different anchors. When a dataset spans the Fall 2022 boundary, the script flags affected sections with `mixed *` in the course summary table and prints a `** MIXED ERAS **` warning in the per-section table. In the report, acknowledge the scale break explicitly and rely on Q13–Q14 for any cross-era quantitative comparisons. Qualitative direction (did things improve, stay consistent, or worsen?) can still be assessed from the comments across both eras.
+After normalization, Q3–Q14 means are directly comparable across all time periods. The `†` label in the Scale column is a transparency marker — it tells the reader that those sections used the old survey form and their Q3–Q12 values were shifted. It is not a warning against comparison.
 
 ### Optional enrollment file
 
@@ -307,9 +307,6 @@ These apply to both modes.
 
 **Calibrate the numbers honestly, but don't overinterpret small differences.**
 With N=12–24, a 0.1 gap between sections is meaningless and a 0.3 gap is suggestive at best. Report the means; don't rank sections by tiny differences. The exception is when *every item* in one section trends lower than another — that's a real pattern even if no single gap is large.
-
-**Never compare Q3–Q12 means numerically across the Fall 2022 scale change.**
-Old-scale means (2–5) and new-scale means (1–4) use different ranges and different anchors. When a course appears in both eras (flagged `mixed *` in the course summary), rely on Q13–Q14 for quantitative trend statements and on the qualitative comments for everything else. You can say "students in both eras consistently valued X" based on comments; you cannot say "Q3 improved from 4.5 to 3.8."
 
 **Treat the lowest individual items as the highest signal.**
 A section with a 4.5 instructor rating and a 3.3 on Q11 (exams reflect objectives) is telling you something specific. The overall rating averages over everything; the individual items localize the issue. Always look at the lowest 2–3 individual items per section.
