@@ -36,7 +36,9 @@ from pathlib import Path
 from collections import defaultdict
 import pandas as pd
 
-# (short_name, substring_to_match_in_column_name, scale_max)
+# Each entry is (short_name, substring_to_match_in_column_name, scale_max).
+# Q3–Q12 use a 1–4 agreement scale; Q13–Q14 use a 1–5 quality scale.
+# scale_max is retained for documentation but not used in computation.
 ITEMS = [
     ("Q3_TaughtClearly",       "taught clearly",                         4),
     ("Q4_WellPrepared",        "well-prepared",                          4),
@@ -52,12 +54,13 @@ ITEMS = [
     ("Q14_CourseOverall",      "course overall rating",                  5),
 ]
 
-STRENGTHS_KEY    = "strengths"             # substring of Q15 column
-IMPROVEMENTS_KEY = "could the teaching"    # substring of Q16 column
-FILLOUT_KEY      = "filloutdate"           # substring of timestamp column
-SUBJECT_KEY      = "subjectid"             # substring of SubjectID column
+# Substrings used to locate specific columns by partial name match.
+STRENGTHS_KEY    = "strengths"             # Q15: open-text strengths
+IMPROVEMENTS_KEY = "could the teaching"    # Q16: open-text improvements
+FILLOUT_KEY      = "filloutdate"           # submission timestamp
+SUBJECT_KEY      = "subjectid"             # course-section identifier
 
-LOW_RR_THRESHOLD = 0.40   # flag sections below this response rate
+LOW_RR_THRESHOLD = 0.40   # response rates below this are flagged in output
 
 TERM_BY_MONTH = {
     1: "Spring", 2: "Spring", 3: "Spring", 4: "Spring", 5: "Spring",
@@ -71,21 +74,29 @@ TERM_BY_MONTH = {
 # ---------------------------------------------------------------------------
 
 def detect_semester(df: pd.DataFrame) -> str:
+    """Infer the semester label (e.g. 'Fall 2025') from the modal FilloutDate."""
     col = find_column(df, FILLOUT_KEY)
     if col is None:
         return "Unknown term"
+
+    # Try the known JMU export format first; fall back to pandas inference.
     parsed = pd.to_datetime(df[col], format="%m/%d/%y %I:%M %p", errors="coerce")
     if parsed.isna().all():
         parsed = pd.to_datetime(df[col], errors="coerce")
+
     parsed = parsed.dropna()
     if parsed.empty:
         return "Unknown term"
+
+    # Use the modal (month, year) pair rather than min/max to be robust against
+    # stray timestamps from adjacent terms (e.g. late submissions).
     month_year = list(zip(parsed.dt.month, parsed.dt.year))
     modal_month, modal_year = max(set(month_year), key=month_year.count)
     return f"{TERM_BY_MONTH.get(modal_month, 'Unknown')} {modal_year}"
 
 
 def find_column(df: pd.DataFrame, needle: str) -> str | None:
+    """Return the first column whose name contains `needle` (case-insensitive), or None."""
     needle = needle.lower()
     for col in df.columns:
         if needle in str(col).lower():
@@ -94,6 +105,7 @@ def find_column(df: pd.DataFrame, needle: str) -> str | None:
 
 
 def is_meaningful_text(value) -> bool:
+    """Return True if `value` is a non-empty string that isn't a D/A placeholder."""
     if pd.isna(value):
         return False
     text = str(value).strip()
@@ -104,17 +116,26 @@ def is_meaningful_text(value) -> bool:
     return True
 
 
+# Maps season name to a sort index so terms order chronologically within a year.
 SEASON_ORDER = {"Spring": 1, "Summer": 2, "Fall": 3}
+
+# Matches section IDs of the form "CS149-0005", "MATH 235_001", etc.
+# Groups: (1) dept letters, (2) course number, (3) section number.
 _SECTION_ID_RE = re.compile(r"^([A-Za-z]+)\s*(\d+)\s*[-_ ]\s*(\d+)")
 
 
 def sort_key(result: dict) -> tuple:
+    """Composite sort key: (year, season, dept, course_num, section_num).
+
+    Unparseable terms and section IDs sort to the end rather than raising.
+    """
     term = result["term"]
     parts = term.split()
     if len(parts) == 2 and parts[0] in SEASON_ORDER and parts[1].isdigit():
         term_key = (int(parts[1]), SEASON_ORDER[parts[0]])
     else:
         term_key = (9999, 9)
+
     m = _SECTION_ID_RE.match(result["section_id"])
     if m:
         dept = m.group(1).upper()
@@ -122,10 +143,15 @@ def sort_key(result: dict) -> tuple:
         section_num = int(m.group(3))
     else:
         dept, course_num, section_num = "ZZZZ", 99999, 99999
+
     return (term_key, dept, course_num, section_num)
 
 
 def course_key(section_id: str) -> str:
+    """Strip the section number from a section ID to get the course identifier.
+
+    E.g. 'CS149-0005' -> 'CS149'. Falls back to the full ID if unparseable.
+    """
     m = _SECTION_ID_RE.match(section_id)
     if m:
         return f"{m.group(1).upper()}{m.group(2)}"
@@ -133,12 +159,11 @@ def course_key(section_id: str) -> str:
 
 
 def fmt_rr(response_rate: float | None) -> str:
-    """Format a response rate (0–1) as a percentage string, or '—'."""
+    """Format a response rate (0–1) as a percentage string, appending '!' if below threshold."""
     if response_rate is None:
         return "—"
-    pct = response_rate * 100
     flag = " !" if response_rate < LOW_RR_THRESHOLD else ""
-    return f"{pct:.0f}%{flag}"
+    return f"{response_rate * 100:.0f}%{flag}"
 
 
 # ---------------------------------------------------------------------------
@@ -146,8 +171,14 @@ def fmt_rr(response_rate: float | None) -> str:
 # ---------------------------------------------------------------------------
 
 def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
+    """Parse one CSV and return a result dict with quantitative means and raw comments.
+
+    `enrollment`, if provided, is used to compute response rate for this section.
+    """
     df = pd.read_csv(path)
 
+    # Prefer the SubjectID embedded in the CSV over the filename, since filenames
+    # are arbitrary and may not reflect the actual course-section.
     subj_col = find_column(df, SUBJECT_KEY)
     if subj_col is not None and df[subj_col].notna().any():
         section_id = str(df[subj_col].dropna().mode().iloc[0]).strip()
@@ -159,7 +190,6 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
     term = detect_semester(df)
     n_total = len(df)
 
-    # Response rate (requires enrollment data)
     enrolled = enrollment.get(section_id) if enrollment else None
     if enrolled is not None and enrolled > 0:
         response_rate = n_total / enrolled
@@ -169,7 +199,8 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
             print(f"  [warn] {section_id}: not found in enrollment file; "
                   f"response rate unavailable", file=sys.stderr)
 
-    # Quantitative means
+    # For each Likert item, count explicit D/A responses separately before
+    # coercing to numeric, so they don't silently become NaN.
     means = {}
     da_counts = {}
     n_responded = {}
@@ -189,8 +220,7 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
         da_counts[short] = int(da)
         n_responded[short] = int(numeric.notna().sum())
 
-    # Qualitative responses
-    strengths_col = find_column(df, STRENGTHS_KEY)
+    strengths_col   = find_column(df, STRENGTHS_KEY)
     improvements_col = find_column(df, IMPROVEMENTS_KEY)
     strengths = (
         [s.strip() for s in df[strengths_col].tolist() if is_meaningful_text(s)]
@@ -220,6 +250,7 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
 # ---------------------------------------------------------------------------
 
 def print_means_table(results: list[dict]) -> None:
+    """Print the per-section quantitative summary table."""
     has_rr = any(r["response_rate"] is not None for r in results)
 
     print("=" * 78)
@@ -250,7 +281,6 @@ def print_means_table(results: list[dict]) -> None:
             row.append(f"{v:.2f}" if v is not None else "—")
         print("\t".join(row))
 
-    # Flag low response rates
     if has_rr:
         low_rr = [r for r in results
                   if r["response_rate"] is not None
@@ -265,7 +295,6 @@ def print_means_table(results: list[dict]) -> None:
         else:
             print("  (none)")
 
-    # Flag notable D/A rates
     print("\nNotable D/A rates (>=30% of responses on any item):")
     any_flagged = False
     for r in results:
@@ -284,6 +313,12 @@ def print_means_table(results: list[dict]) -> None:
 
 
 def print_course_summary_table(results: list[dict]) -> None:
+    """Print a per-course aggregate table (one row per course, all terms combined).
+
+    Q13/Q14 means are weighted by n_responded so larger sections contribute
+    proportionally more. Pooled response rate is sum(respondents)/sum(enrolled)
+    rather than a mean of per-section rates, which would over-weight small sections.
+    """
     has_rr = any(r["response_rate"] is not None for r in results)
 
     groups: dict[str, list[dict]] = defaultdict(list)
@@ -316,20 +351,23 @@ def print_course_summary_table(results: list[dict]) -> None:
 
     for course in sorted_courses:
         sections = groups[course]
-        n_terms = len({r["term"] for r in sections})
+        n_terms    = len({r["term"] for r in sections})
         n_sections = len(sections)
-        total_n = sum(r["n_total"] for r in sections)
+        total_n    = sum(r["n_total"] for r in sections)
 
+        # Only pool response rate over sections that have enrollment data;
+        # sections without it are excluded rather than treated as 0.
         sections_with_rr = [r for r in sections if r["enrolled"] is not None]
         if has_rr and sections_with_rr:
-            total_enrolled = sum(r["enrolled"] for r in sections_with_rr)
-            pooled_respondents = sum(r["n_total"] for r in sections_with_rr)
+            total_enrolled     = sum(r["enrolled"] for r in sections_with_rr)
+            pooled_respondents = sum(r["n_total"]  for r in sections_with_rr)
             pooled_rr = pooled_respondents / total_enrolled if total_enrolled else None
         else:
             total_enrolled = None
-            pooled_rr = None
+            pooled_rr      = None
 
         def weighted_mean(short: str) -> str:
+            """Weighted mean for `short` across all sections in this course group."""
             total_weight = sum(r["n_responded"].get(short) or 0 for r in sections)
             if total_weight == 0:
                 return "—"
@@ -348,6 +386,7 @@ def print_course_summary_table(results: list[dict]) -> None:
 
 
 def print_comments(results: list[dict]) -> None:
+    """Print all Q15/Q16 free-text responses, grouped by section."""
     for r in results:
         if r["response_rate"] is not None:
             rr_note = (f"  |  {r['n_total']}/{r['enrolled']} responded "
@@ -379,6 +418,7 @@ def print_comments(results: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 
 def main():
+    """Parse arguments, load data, and drive the three output sections."""
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("files", nargs="+", help="CSV file paths (globs OK)")
@@ -388,7 +428,6 @@ def main():
     )
     args = parser.parse_args()
 
-    # Load optional enrollment data
     enrollment: dict[str, int] | None = None
     if args.enrollment:
         enroll_path = Path(args.enrollment)
@@ -400,7 +439,8 @@ def main():
             print(f"  [info] loaded enrollment data for "
                   f"{len(enrollment)} section(s)", file=sys.stderr)
 
-    # Expand any globs that the shell didn't expand
+    # Expand globs manually to handle shells that don't (e.g. when invoked
+    # programmatically with a literal glob string like "*.csv").
     paths: list[Path] = []
     for f in args.files:
         expanded = glob.glob(f)
