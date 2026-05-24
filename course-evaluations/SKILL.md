@@ -59,7 +59,25 @@ The Q3–Q12 wording is fixed; each column name contains the question text dupli
 
 The provided script renames these by substring match, so it stays robust if a future export reorders columns or tweaks wording slightly.
 
-### Scales
+### Optional enrollment data
+
+Response rates require knowing how many students were enrolled in each section ("Course Audience" in the JMU PDF report). There are two ways to provide this:
+
+**Option 1 — Integers in the user's message.** If the user lists enrollment numbers inline (e.g. "analyze my evals, enrollment was 35, 32, 18"), extract those integers and pass them via `--enrollment-list`. Numbers are matched to CSV files in alphabetical filename order. The script prints the mapping it used at the top of its output — include this mapping in the report so the user can verify the numbers were applied to the right sections.
+
+**Option 2 — JSON file upload.** If the user uploads a `.json` file alongside the CSVs, pass it via `--enrollment`. The JSON maps SubjectID to enrolled count:
+
+```json
+{
+  "CS149-0001": 35,
+  "CS149-0002": 32,
+  "CS345-0001": 18
+}
+```
+
+SubjectIDs absent from the JSON are silently skipped. Partial coverage is fine. If both a JSON file and inline integers are present, the JSON takes precedence.
+
+When enrollment data is present (either method), both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 
 - **Q3–Q12 are 1–4 Likert agreement**: 1 = Strongly Disagree, 2 = Disagree, 3 = Agree, 4 = Strongly Agree. The scale has no neutral midpoint, so students who are merely "fine" must pick 3, which floors most means around 3.0+. The informative range is roughly 2.8–4.0.
 - **Q13–Q14 are 1–5 overall ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent.
@@ -77,16 +95,27 @@ The script derives each section's semester from the modal `FilloutDate` timestam
 
 ### 1. Read the inputs
 
-Run the provided script to ingest all uploaded CSVs at once:
+Run the provided script. Check for enrollment data in either of the two supported forms:
 
 ```bash
-python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv
+# If user provided inline integers, e.g. extracted as "35 32 18":
+python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment-list 35 32 18
+
+# If user uploaded a JSON file:
+ENROLLMENT=$(ls /mnt/user-data/uploads/*.json 2>/dev/null | head -1)
+if [ -n "$ENROLLMENT" ]; then
+    python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment "$ENROLLMENT"
+else
+    python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv
+fi
 ```
 
+If enrollment data was used via `--enrollment-list`, the script prints the section-to-number mapping in its output. Copy this mapping into the report as a brief note so the user can confirm the numbers were assigned correctly.
+
 It prints three things to stdout:
-- **Per-section means table** — one row per section with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings. Use this in Mode A reports.
-- **Per-course summary table** — one row per unique course (e.g., CS149), showing number of terms taught, number of sections, total N, and weighted means for Q13 and Q14 (weighted by respondents per section, D/A excluded). Use this as the overview table in Mode B reports.
-- **Free-text comments** — all Q15 (strengths) and Q16 (improvements) responses grouped by section.
+- **Per-section means table** — one row per section with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings. When enrollment data is present, adds Enrolled and RR% columns and lists sections below 40% response rate. Use this in Mode A reports.
+- **Per-course summary table** — one row per unique course (e.g., CS149), showing number of terms taught, number of sections, total N, weighted means for Q13 and Q14, and — when enrollment data is present — total enrolled and pooled response rate. Use this as the overview table in Mode B reports.
+- **Free-text comments** — all Q15 (strengths) and Q16 (improvements) responses grouped by section. When enrollment data is present, each section header includes its response rate; sections below 40% are flagged prominently.
 
 The script reads section identity from the SubjectID column inside each CSV — it does not use filenames. It sorts output chronologically by term, then by department prefix, course number, and section number.
 
@@ -265,6 +294,9 @@ A section with a 4.5 instructor rating and a 3.3 on Q11 (exams reflect objective
 
 **Contextualize against non-teaching factors.**
 Research consistently shows that intro and required courses rate lower than upper-division electives independent of teaching quality; larger classes tend to rate lower than small ones; and grade expectations correlate with ratings. Before attributing a gap to teaching, note structural differences that could explain it. This is especially important in Mode B, where a promotion committee might compare intro and elective scores directly.
+
+**Treat response rate as a reliability weight, not a score.**
+When enrollment data is present, sections below 40% response rate are flagged in the script output. For those sections, be explicit in the report: note the rate, acknowledge that the comments may not represent the full class, and avoid presenting themes from low-response sections with the same confidence as themes from high-response ones. A section with N=8 out of 10 enrolled (80%) is very different from N=8 out of 30 enrolled (27%), even though both produce the same raw comment count. When response rates are unavailable, flag small absolute N (below ~10) as a reliability caveat instead.
 
 **A single semester is a snapshot.**
 Patterns that recur across two or more semesters — especially when supported by qualitative themes — are the findings worth acting on. One term's data is a starting point, not a verdict.
