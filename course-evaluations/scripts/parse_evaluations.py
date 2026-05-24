@@ -8,6 +8,8 @@ Usage:
     python parse_evaluations.py /mnt/user-data/uploads/*.csv
 
 Robustness notes:
+- The SubjectID column inside each CSV is the authoritative section
+  identifier. Filenames are ignored for identification purposes.
 - Columns are identified by *substring* of the question text, so the script
   keeps working if the exporter changes column order or tweaks wording slightly.
 - "D/A" string values are converted to NaN before computing means.
@@ -40,9 +42,9 @@ ITEMS = [
 STRENGTHS_KEY = "strengths"             # substring of Q15 column
 IMPROVEMENTS_KEY = "could the teaching" # substring of Q16 column
 FILLOUT_KEY = "filloutdate"             # substring of timestamp column
+SUBJECT_KEY = "subjectid"              # substring of SubjectID column
 
-# Months -> term name. Late Dec/early Jan completions still count as
-# the Fall/Spring term whose end-of-semester they're closest to.
+# Months -> term name.
 TERM_BY_MONTH = {
     1: "Spring", 2: "Spring", 3: "Spring", 4: "Spring", 5: "Spring",
     6: "Summer", 7: "Summer", 8: "Summer",
@@ -58,14 +60,12 @@ def detect_semester(df: pd.DataFrame) -> str:
     col = find_column(df, FILLOUT_KEY)
     if col is None:
         return "Unknown term"
-    # Format like "12/01/25 01:33 PM"; fall back to inference if format differs.
     parsed = pd.to_datetime(df[col], format="%m/%d/%y %I:%M %p", errors="coerce")
     if parsed.isna().all():
         parsed = pd.to_datetime(df[col], errors="coerce")
     parsed = parsed.dropna()
     if parsed.empty:
         return "Unknown term"
-    # Modal (month, year) — most responses' term wins.
     month_year = list(zip(parsed.dt.month, parsed.dt.year))
     modal_month, modal_year = max(set(month_year), key=month_year.count)
     return f"{TERM_BY_MONTH.get(modal_month, 'Unknown')} {modal_year}"
@@ -99,15 +99,14 @@ _SECTION_ID_RE = re.compile(r"^([A-Za-z]+)\s*(\d+)\s*[-_ ]\s*(\d+)")
 def sort_key(result: dict) -> tuple:
     """
     Order results first by term (chronologically), then by department prefix,
-    then by course number, then by section number. Unparseable values sort
-    last so they don't get lost in the middle of the report.
+    then by course number, then by section number. Unparseable values sort last.
     """
     term = result["term"]
     parts = term.split()
     if len(parts) == 2 and parts[0] in SEASON_ORDER and parts[1].isdigit():
         term_key = (int(parts[1]), SEASON_ORDER[parts[0]])
     else:
-        term_key = (9999, 9)  # "Unknown term" -> end
+        term_key = (9999, 9)
 
     m = _SECTION_ID_RE.match(result["section_id"])
     if m:
@@ -122,7 +121,17 @@ def sort_key(result: dict) -> tuple:
 
 def analyze_file(path: Path) -> dict:
     df = pd.read_csv(path)
-    section_id = path.stem  # e.g., "CS149-0005"
+
+    # Use SubjectID from inside the CSV as the authoritative section identifier.
+    # Fall back to the filename stem only if the column is absent.
+    subj_col = find_column(df, SUBJECT_KEY)
+    if subj_col is not None and df[subj_col].notna().any():
+        section_id = str(df[subj_col].dropna().mode().iloc[0]).strip()
+    else:
+        section_id = path.stem
+        print(f"  [warn] {path.name}: SubjectID column not found; "
+              f"using filename '{path.stem}' as section ID", file=sys.stderr)
+
     term = detect_semester(df)
     n_total = len(df)
 
