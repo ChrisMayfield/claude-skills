@@ -232,13 +232,6 @@ def print_means_table(results: list[dict]) -> None:
     if has_rr:
         print(f"        RR% = response rate (respondents / enrolled)."
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}% threshold.")
-        # Print the enrollment mapping so the user can verify order was correct
-        print("\nEnrollment mapping used:")
-        for r in results:
-            if r["enrolled"] is not None:
-                print(f"  {r['section_id']}: {r['n_total']} responded / "
-                      f"{r['enrolled']} enrolled "
-                      f"({r['response_rate']*100:.0f}%)")
     print()
 
     headers = ["Section", "Term", "N"]
@@ -327,8 +320,6 @@ def print_course_summary_table(results: list[dict]) -> None:
         n_sections = len(sections)
         total_n = sum(r["n_total"] for r in sections)
 
-        # Pooled response rate: sum(respondents) / sum(enrolled) for sections
-        # that have enrollment data
         sections_with_rr = [r for r in sections if r["enrolled"] is not None]
         if has_rr and sections_with_rr:
             total_enrolled = sum(r["enrolled"] for r in sections_with_rr)
@@ -358,7 +349,6 @@ def print_course_summary_table(results: list[dict]) -> None:
 
 def print_comments(results: list[dict]) -> None:
     for r in results:
-        # Build a response-rate note for the section header
         if r["response_rate"] is not None:
             rr_note = (f"  |  {r['n_total']}/{r['enrolled']} responded "
                        f"({r['response_rate']*100:.0f}%)")
@@ -396,11 +386,6 @@ def main():
         "--enrollment", metavar="JSON",
         help="Optional JSON file mapping SubjectID to enrolled student count"
     )
-    parser.add_argument(
-        "--enrollment-list", metavar="N", type=int, nargs="+",
-        help="Enrollment counts in the same order as the (alphabetically sorted) "
-             "CSV files. Ignored if --enrollment is also provided."
-    )
     args = parser.parse_args()
 
     # Load optional enrollment data
@@ -413,7 +398,7 @@ def main():
             with open(enroll_path) as f:
                 enrollment = json.load(f)
             print(f"  [info] loaded enrollment data for "
-                  f"{len(enrollment)} section(s) from JSON", file=sys.stderr)
+                  f"{len(enrollment)} section(s)", file=sys.stderr)
 
     # Expand any globs that the shell didn't expand
     paths: list[Path] = []
@@ -435,31 +420,6 @@ def main():
             print(f"  [warn] {p} not found; skipping", file=sys.stderr)
             continue
         results.append(analyze_file(p, enrollment))
-
-    # If --enrollment-list was given (and --enrollment was not), build the
-    # enrollment dict now that we know the sorted file order and section IDs.
-    # We do a two-pass: first pass reads section IDs, second applies numbers.
-    if args.enrollment_list and not args.enrollment:
-        counts = args.enrollment_list
-        if len(counts) != len(results):
-            print(
-                f"  [warn] --enrollment-list has {len(counts)} value(s) but "
-                f"{len(results)} CSV file(s) were loaded; "
-                f"enrollment data will not be applied",
-                file=sys.stderr,
-            )
-        else:
-            enrollment = {r["section_id"]: n for r, n in zip(results, counts)}
-            print("  [info] enrollment mapping from --enrollment-list:",
-                  file=sys.stderr)
-            for sid, n in enrollment.items():
-                print(f"           {sid} → {n}", file=sys.stderr)
-            # Re-analyze files with enrollment data now that we have the mapping
-            results = []
-            for p in paths:
-                if not p.exists():
-                    continue
-                results.append(analyze_file(p, enrollment))
 
     if not results:
         print("No CSVs could be read.", file=sys.stderr)

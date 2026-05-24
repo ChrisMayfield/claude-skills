@@ -59,13 +59,9 @@ The Q3–Q12 wording is fixed; each column name contains the question text dupli
 
 The provided script renames these by substring match, so it stays robust if a future export reorders columns or tweaks wording slightly.
 
-### Optional enrollment data
+### Optional enrollment file
 
-Response rates require knowing how many students were enrolled in each section ("Course Audience" in the JMU PDF report). There are two ways to provide this:
-
-**Option 1 — Integers in the user's message.** If the user lists enrollment numbers inline (e.g. "analyze my evals, enrollment was 35, 32, 18"), extract those integers and pass them via `--enrollment-list`. Numbers are matched to CSV files in alphabetical filename order. The script prints the mapping it used at the top of its output — include this mapping in the report so the user can verify the numbers were applied to the right sections.
-
-**Option 2 — JSON file upload.** If the user uploads a `.json` file alongside the CSVs, pass it via `--enrollment`. The JSON maps SubjectID to enrolled count:
+To include response rates, upload a JSON file (alongside the CSVs) mapping each SubjectID to the number of students enrolled at the end of the term — what the JMU PDF report calls "Course Audience":
 
 ```json
 {
@@ -75,9 +71,7 @@ Response rates require knowing how many students were enrolled in each section (
 }
 ```
 
-SubjectIDs absent from the JSON are silently skipped. Partial coverage is fine. If both a JSON file and inline integers are present, the JSON takes precedence.
-
-When enrollment data is present (either method), both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
+SubjectIDs not present in the file are silently skipped. Partial coverage is fine. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 
 - **Q3–Q12 are 1–4 Likert agreement**: 1 = Strongly Disagree, 2 = Disagree, 3 = Agree, 4 = Strongly Agree. The scale has no neutral midpoint, so students who are merely "fine" must pick 3, which floors most means around 3.0+. The informative range is roughly 2.8–4.0.
 - **Q13–Q14 are 1–5 overall ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent.
@@ -95,13 +89,10 @@ The script derives each section's semester from the modal `FilloutDate` timestam
 
 ### 1. Read the inputs
 
-Run the provided script. Check for enrollment data in either of the two supported forms:
+Run the provided script to ingest all uploaded CSVs. First check whether a JSON enrollment file was uploaded alongside the CSVs:
 
 ```bash
-# If user provided inline integers, e.g. extracted as "35 32 18":
-python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment-list 35 32 18
-
-# If user uploaded a JSON file:
+# Auto-detect enrollment file if present
 ENROLLMENT=$(ls /mnt/user-data/uploads/*.json 2>/dev/null | head -1)
 if [ -n "$ENROLLMENT" ]; then
     python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment "$ENROLLMENT"
@@ -109,8 +100,6 @@ else
     python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv
 fi
 ```
-
-If enrollment data was used via `--enrollment-list`, the script prints the section-to-number mapping in its output. Copy this mapping into the report as a brief note so the user can confirm the numbers were assigned correctly.
 
 It prints three things to stdout:
 - **Per-section means table** — one row per section with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings. When enrollment data is present, adds Enrolled and RR% columns and lists sections below 40% response rate. Use this in Mode A reports.
