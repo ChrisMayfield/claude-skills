@@ -38,6 +38,36 @@ ITEMS = [
 
 STRENGTHS_KEY = "strengths"             # substring of Q15 column
 IMPROVEMENTS_KEY = "could the teaching" # substring of Q16 column
+FILLOUT_KEY = "filloutdate"             # substring of timestamp column
+
+# Months -> term name. Late Dec/early Jan completions still count as
+# the Fall/Spring term whose end-of-semester they're closest to.
+TERM_BY_MONTH = {
+    1: "Spring", 2: "Spring", 3: "Spring", 4: "Spring", 5: "Spring",
+    6: "Summer", 7: "Summer", 8: "Summer",
+    9: "Fall", 10: "Fall", 11: "Fall", 12: "Fall",
+}
+
+
+def detect_semester(df: pd.DataFrame) -> str:
+    """
+    Infer the semester ("Fall 2025", "Spring 2026", etc.) from the modal
+    FilloutDate. Returns "Unknown term" if no usable timestamps are present.
+    """
+    col = find_column(df, FILLOUT_KEY)
+    if col is None:
+        return "Unknown term"
+    # Format like "12/01/25 01:33 PM"; fall back to inference if format differs.
+    parsed = pd.to_datetime(df[col], format="%m/%d/%y %I:%M %p", errors="coerce")
+    if parsed.isna().all():
+        parsed = pd.to_datetime(df[col], errors="coerce")
+    parsed = parsed.dropna()
+    if parsed.empty:
+        return "Unknown term"
+    # Modal (month, year) — most responses' term wins.
+    month_year = list(zip(parsed.dt.month, parsed.dt.year))
+    modal_month, modal_year = max(set(month_year), key=month_year.count)
+    return f"{TERM_BY_MONTH.get(modal_month, 'Unknown')} {modal_year}"
 
 
 def find_column(df: pd.DataFrame, needle: str) -> str | None:
@@ -64,6 +94,7 @@ def is_meaningful_text(value) -> bool:
 def analyze_file(path: Path) -> dict:
     df = pd.read_csv(path)
     section_id = path.stem  # e.g., "CS149-0005"
+    term = detect_semester(df)
     n_total = len(df)
 
     # Quantitative means
@@ -100,6 +131,7 @@ def analyze_file(path: Path) -> dict:
 
     return {
         "section_id": section_id,
+        "term": term,
         "n_total": n_total,
         "means": means,
         "da_counts": da_counts,
@@ -114,13 +146,14 @@ def print_means_table(results: list[dict]) -> None:
     print("QUANTITATIVE SUMMARY")
     print("=" * 78)
     print("Scales: Q3-Q12 are 1-4 (1=Strongly Disagree, 4=Strongly Agree)")
-    print("        Q13-Q14 are 1-5 (overall ratings)")
-    print("        D/A responses excluded from means.\n")
+    print("        Q13-Q14 are 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)")
+    print("        D/A responses excluded from means.")
+    print("        Term auto-detected from modal FilloutDate.\n")
 
-    headers = ["Section", "N"] + [short for short, _, _ in ITEMS]
+    headers = ["Section", "Term", "N"] + [short for short, _, _ in ITEMS]
     print("\t".join(headers))
     for r in results:
-        row = [r["section_id"], str(r["n_total"])]
+        row = [r["section_id"], r["term"], str(r["n_total"])]
         for short, _, _ in ITEMS:
             v = r["means"].get(short)
             row.append(f"{v:.2f}" if v is not None else "—")
@@ -146,14 +179,15 @@ def print_means_table(results: list[dict]) -> None:
 
 def print_comments(results: list[dict]) -> None:
     for r in results:
+        label = f"{r['section_id']} — {r['term']}"
         print("\n" + "=" * 78)
-        print(f"{r['section_id']} — STRENGTHS (Q15)  [{len(r['strengths'])} substantive responses]")
+        print(f"{label} — STRENGTHS (Q15)  [{len(r['strengths'])} substantive responses]")
         print("=" * 78)
         for i, s in enumerate(r["strengths"], 1):
             print(f"\n[{i}] {s}")
 
         print("\n" + "=" * 78)
-        print(f"{r['section_id']} — IMPROVEMENTS (Q16)  [{len(r['improvements'])} substantive responses]")
+        print(f"{label} — IMPROVEMENTS (Q16)  [{len(r['improvements'])} substantive responses]")
         print("=" * 78)
         for i, s in enumerate(r["improvements"], 1):
             print(f"\n[{i}] {s}")

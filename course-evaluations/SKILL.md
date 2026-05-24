@@ -36,9 +36,13 @@ The provided script renames these by substring match, so it remains robust if a 
 ### Scales
 
 - **Q3–Q12 are 1–4 Likert agreement**: 1 = Strongly Disagree, 2 = Disagree, 3 = Agree, 4 = Strongly Agree. A "good" mean is ≥3.5; below 3.4 is worth examining.
-- **Q13–Q14 are 1–5 overall ratings**: 1 = Poor … 5 = Excellent. A "good" mean is ≥4.3; below 4.0 is worth examining.
+- **Q13–Q14 are 1–5 overall ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent. A "good" mean is ≥4.3; below 4.0 is worth examining.
 - **`D/A`** appears as a string in any quantitative column. It means *Doesn't Apply* or *Decline to Answer* — exclude from means, but a high rate (>30% on Q7 especially, the "outside of class" item) is itself a signal that students didn't engage with that aspect of the course.
 - **NaN/empty** is common — a student can submit only Likert items or only narrative.
+
+### Term auto-detection
+
+The script derives each section's semester from the modal `FilloutDate` timestamp — most submissions cluster at the end of the term they're for, so the modal month reliably identifies the semester. This means any mix of files from any number of semesters can be uploaded together and the report will group them correctly. Months 1–5 are Spring, 6–8 are Summer, 9–12 are Fall. If a section's timestamps are missing or unparseable, the script labels it "Unknown term" and you should ask the user before assuming.
 
 ## Workflow
 
@@ -51,10 +55,12 @@ python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv
 ```
 
 It prints two things to stdout:
-- A means table across all sections (one row per file) with N, all Likert means rounded to 2 decimals, and overall ratings flagged.
-- A grouped dump of all Q15 (strengths) and Q16 (improvements) free-text responses per section, with `D/A` and empty entries filtered out.
+- A means table across all sections (one row per file) with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings flagged.
+- A grouped dump of all Q15 (strengths) and Q16 (improvements) free-text responses per section, headed by both the section ID and the detected term.
 
-If the user uploaded files with different naming conventions, the script still works — it parses each file independently. If a column it expects is missing, it warns and skips that item rather than failing.
+Because the term is detected per-file, a single run can ingest evaluations from any combination of semesters, and the report should organize per-course themes by term so trends across semesters are visible.
+
+If the user uploaded files with different naming conventions, the script still works — it parses each file independently. If a column it expects is missing, it warns and skips that item rather than failing. If `FilloutDate` is missing or malformed, the term is reported as "Unknown term" and you should ask the user how to label it before writing the report.
 
 ### 2. Read the comments yourself, fully
 
@@ -166,14 +172,20 @@ Use the one markdown table for the quantitative snapshot. Beyond that, the repor
 
 ## Example
 
-**Input:** Six CSVs for CS 149 (two sections), CS 159 (two sections), CS 343, and CS 374, all taught by the same instructor across Fall 2025 and Spring 2026.
+The following is a *hypothetical* illustration of the target voice — not based on any real evaluation.
 
-**Output (excerpts to illustrate the right voice):**
+**Input:** Three CSVs uploaded together: `BIO101-0003.csv` (Fall, N=22), `BIO101-0004.csv` (Spring, N=19), and `BIO205-0001.csv` (Spring, N=14). All taught by the same instructor.
 
-> Instructor ratings are consistently very high (4.33–4.83/5); the *course* ratings are a touch lower (3.67–4.33), which is typical and suggests most criticism lands on course design/materials rather than teaching.
+**Output excerpts illustrating the right voice:**
 
-> Two notable themes: **Early-semester homework load** — one detailed comment says early HWs were "as much work as a PA with half the allotted time." **Paper tests for a coding class** — same comment framed it as testing memorization rather than understanding. Worth weighing against the academic-integrity reason paper tests exist.
+> Instructor overall sits at 4.6 in both BIO 101 sections and 4.4 in BIO 205; course overall lags slightly at 4.0–4.2 across the board. The gap between instructor and course ratings is consistent and worth noting — students rate the teaching itself higher than the course as a whole, which usually points to course-design or materials issues rather than teaching problems.
 
-> **Gradescope autograder confusion** — CS 149-0005, CS 149-0006, CS 159-0005. The pattern is "tests fail on Gradescope and I can't tell why from the message," especially when project specs and autograder behavior drift apart.
+> Across both BIO 101 sections, the lowest individual item is Q10 (materials valuable) at 3.4 and 3.5. In the comments, four students named the lab manual specifically — "outdated," "doesn't match what we do in lab," "hard to follow before Wednesday's session." This is the clearest single signal in the dataset and is probably the highest-leverage thing to change.
 
-Note the voice: direct, specific, names the issue concretely, acknowledges trade-offs, attributes themes to specific sections. That's the target.
+> **Pacing in the second half of the semester** — flagged in BIO101-0003 (three students), BIO101-0004 (two students), and once in BIO 205. The specific complaint differs by course: in BIO 101 it's the cellular respiration unit, in BIO 205 it's the population genetics section. Worth re-examining the time allocation for those units.
+
+> **Group work was polarizing in BIO 205.** Four students named group projects as the best part of the course; three named them as the worst. The split appears to be about *how groups were formed* rather than the concept — students who self-selected groups were positive; students assigned to groups were negative. A change to group-formation policy might resolve most of the friction without dropping the project.
+
+> One student in BIO101-0004 wrote: "I came in afraid of biology and am leaving as a major." This kind of comment doesn't appear in the numbers and isn't a "theme" — but it's worth surfacing as a unique signal.
+
+Note the voice: direct, specific, names exact units and assignments, distinguishes course-design issues from teaching, acknowledges trade-offs, and weights findings by how often they repeat across students and sections. That's the target.
