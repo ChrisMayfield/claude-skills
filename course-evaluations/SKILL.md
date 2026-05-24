@@ -35,10 +35,12 @@ The provided script renames these by substring match, so it remains robust if a 
 
 ### Scales
 
-- **Q3–Q12 are 1–4 Likert agreement**: 1 = Strongly Disagree, 2 = Disagree, 3 = Agree, 4 = Strongly Agree. A "good" mean is ≥3.5; below 3.4 is worth examining.
-- **Q13–Q14 are 1–5 overall ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent. A "good" mean is ≥4.3; below 4.0 is worth examining.
+- **Q3–Q12 are 1–4 Likert agreement**: 1 = Strongly Disagree, 2 = Disagree, 3 = Agree, 4 = Strongly Agree. The scale has no neutral midpoint, so students who are merely "fine, no complaints" must pick 3, which floors most means around 3.0+. The informative range is roughly 2.8–4.0.
+- **Q13–Q14 are 1–5 overall ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent.
 - **`D/A`** appears as a string in any quantitative column. It means *Doesn't Apply* or *Decline to Answer* — exclude from means, but a high rate (>30% on Q7 especially, the "outside of class" item) is itself a signal that students didn't engage with that aspect of the course.
 - **NaN/empty** is common — a student can submit only Likert items or only narrative.
+
+**Don't use absolute thresholds for "good" vs. "bad" means.** What counts as a strong or weak rating depends on institutional and disciplinary norms the skill doesn't have access to — a 3.6 on a 4-point scale might be unusually high at one institution and unremarkable at another. Instead, surface signal *relatively*: flag the lowest 1–2 individual items per section regardless of their absolute value, and note any item that sits notably below that section's own average (≥0.3 below is a useful rule of thumb). The "lowest items" pattern is what the instructor can act on; absolute "good/bad" labels without external norms are guesses dressed up as judgments.
 
 ### Term auto-detection
 
