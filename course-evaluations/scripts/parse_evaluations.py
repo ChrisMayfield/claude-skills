@@ -37,19 +37,21 @@ from collections import defaultdict
 import pandas as pd
 
 # Each entry is (short_name, substring_to_match_in_column_name, scale_max).
-# Q3–Q12 use a 1–4 agreement scale; Q13–Q14 use a 1–5 quality scale.
+# All items use a 1–5 scale. Q3–Q12 are Likert agreement items
+# (1=Strongly Disagree … 5=Strongly Agree, with 3=Neutral as midpoint).
+# Q13–Q14 are overall quality ratings (1=Poor … 5=Excellent).
 # scale_max is retained for documentation but not used in computation.
 ITEMS = [
-    ("Q3_TaughtClearly",       "taught clearly",                         4),
-    ("Q4_WellPrepared",        "well-prepared",                          4),
-    ("Q5_ConcernRespect",      "concern and respect",                    4),
-    ("Q6_HelpfulFeedback",     "helpful feedback",                       4),
-    ("Q7_HelpOutsideClass",    "outside of class",                       4),
-    ("Q8_CourseStructure",     "structure of the course",                4),
-    ("Q9_AssignmentsValuable", "assignments were valuable",              4),
-    ("Q10_MaterialsValuable",  "course materials",                       4),
-    ("Q11_ExamsReflective",    "exams and other assessments",            4),
-    ("Q12_LearnedAGreatDeal",  "learned a great deal",                   4),
+    ("Q3_TaughtClearly",       "taught clearly",                         5),
+    ("Q4_WellPrepared",        "well-prepared",                          5),
+    ("Q5_ConcernRespect",      "concern and respect",                    5),
+    ("Q6_HelpfulFeedback",     "helpful feedback",                       5),
+    ("Q7_HelpOutsideClass",    "outside of class",                       5),
+    ("Q8_CourseStructure",     "structure of the course",                5),
+    ("Q9_AssignmentsValuable", "assignments were valuable",              5),
+    ("Q10_MaterialsValuable",  "course materials",                       5),
+    ("Q11_ExamsReflective",    "exams and other assessments",            5),
+    ("Q12_LearnedAGreatDeal",  "learned a great deal",                   5),
     ("Q13_InstructorOverall",  "instructor overall rating",              5),
     ("Q14_CourseOverall",      "course overall rating",                  5),
 ]
@@ -147,6 +149,14 @@ def sort_key(result: dict) -> tuple:
     return (term_key, dept, course_num, section_num)
 
 
+def term_sort_key(term: str) -> tuple:
+    """Sort key for a term string alone (used when sorting sets of term labels)."""
+    parts = term.split()
+    if len(parts) == 2 and parts[0] in SEASON_ORDER and parts[1].isdigit():
+        return (int(parts[1]), SEASON_ORDER[parts[0]])
+    return (9999, 9)
+
+
 def course_key(section_id: str) -> str:
     """Strip the section number from a section ID to get the course identifier.
 
@@ -220,7 +230,7 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
         da_counts[short] = int(da)
         n_responded[short] = int(numeric.notna().sum())
 
-    strengths_col   = find_column(df, STRENGTHS_KEY)
+    strengths_col    = find_column(df, STRENGTHS_KEY)
     improvements_col = find_column(df, IMPROVEMENTS_KEY)
     strengths = (
         [s.strip() for s in df[strengths_col].tolist() if is_meaningful_text(s)]
@@ -256,12 +266,12 @@ def print_means_table(results: list[dict]) -> None:
     print("=" * 78)
     print("QUANTITATIVE SUMMARY — PER SECTION")
     print("=" * 78)
-    print("Scales: Q3-Q12 are 1-4 (1=Strongly Disagree, 4=Strongly Agree)")
-    print("        Q13-Q14 are 1-5 (1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent)")
-    print("        D/A responses excluded from means.")
-    print("        Term auto-detected from modal FilloutDate.")
+    print("All items use a 1–5 scale.")
+    print("Q3-Q12: 1=Strongly Disagree, 2=Disagree, 3=Neutral, 4=Agree, 5=Strongly Agree")
+    print("Q13-Q14: 1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent")
+    print("D/A responses excluded from means. Term auto-detected from modal FilloutDate.")
     if has_rr:
-        print(f"        RR% = response rate (respondents / enrolled)."
+        print(f"RR% = response rate (respondents / enrolled)."
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}% threshold.")
     print()
 
@@ -343,7 +353,7 @@ def print_course_summary_table(results: list[dict]) -> None:
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}%.")
     print()
 
-    headers = ["Course", "Terms", "Sections", "Total N"]
+    headers = ["Course", "Term range", "Sections", "Total N"]
     if has_rr:
         headers += ["Total Enrolled", "Pooled RR%"]
     headers += ["Q13_InstructorOverall", "Q14_CourseOverall"]
@@ -351,7 +361,12 @@ def print_course_summary_table(results: list[dict]) -> None:
 
     for course in sorted_courses:
         sections = groups[course]
-        n_terms    = len({r["term"] for r in sections})
+
+        # Show the first and last term taught rather than just a count,
+        # which is far more informative for a longitudinal promotion report.
+        terms = sorted({r["term"] for r in sections}, key=term_sort_key)
+        term_range = terms[0] if len(terms) == 1 else f"{terms[0]} – {terms[-1]}"
+
         n_sections = len(sections)
         total_n    = sum(r["n_total"] for r in sections)
 
@@ -377,7 +392,7 @@ def print_course_summary_table(results: list[dict]) -> None:
             )
             return f"{wsum / total_weight:.2f}"
 
-        row = [course, str(n_terms), str(n_sections), str(total_n)]
+        row = [course, term_range, str(n_sections), str(total_n)]
         if has_rr:
             row.append(str(total_enrolled) if total_enrolled is not None else "—")
             row.append(fmt_rr(pooled_rr))

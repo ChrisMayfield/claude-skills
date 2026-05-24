@@ -29,6 +29,8 @@ Detect the appropriate mode from context. If ambiguous, ask.
 
 **Mode B — Promotion dossier** (~30 CSVs, 4–6 year period): The instructor wants to document teaching practices and growth over time as part of a promotion case. The report should surface longitudinal patterns — improvements made, what changed, what stayed consistent — and frame findings in terms of course content, rigor, assignments, and learning experiences, not instructor personality.
 
+Claude.ai allows a maximum of 20 file attachments per message. For Mode B, which typically involves 25–35 CSV files, instruct the user to put all CSVs in a zip archive and upload the zip as a single attachment. The skill's bash command handles unzipping automatically.
+
 The time period is inferred from the CSV files themselves — the script's term auto-detection covers this. Before running the script in Mode B, ask the user:
 1. Should the report be organized by course, by curriculum level (intro / core / elective), or both?
 2. Are there specific courses or changes the instructor wants to highlight?
@@ -45,14 +47,13 @@ Columns (in order):
 |---|---|---|
 | `SubjectID` | Course-section identifier, e.g. `CS149-0005` | string |
 | `SecondarySubjectID` | Internal course key | int |
-| `EnrollmentType` | Always "System" in practice | string |
 | `FilloutDate` | Timestamp of submission | string |
-| `Q3` … `Q12` | Ten Likert agreement items (see below) | 1–4 numeric, or `D/A` |
+| `Q3` … `Q12` | Ten Likert agreement items (see below) | 1–5 numeric, or `D/A` |
 | `Q13` | Instructor overall rating | 1–5 numeric, or `D/A` |
 | `Q14` | Course overall rating | 1–5 numeric, or `D/A` |
 | `Q15` | "What are the strengths of the instructor or course?" | free text |
 | `Q16` | "How could the teaching of this course be improved?" | free text |
-| `Unnamed: 18` | Empty trailing column from the export | ignore |
+| `Unnamed: 17` | Empty trailing column from the export | ignore |
 
 The Q3–Q12 wording is fixed; each column name contains the question text duplicated, like:
 `Q3_The instructor taught clearly and stressed important points._The instructor taught clearly and stressed important points.`
@@ -73,8 +74,9 @@ To include response rates, upload a JSON file (alongside the CSVs) mapping each 
 
 SubjectIDs not present in the file are silently skipped. Partial coverage is fine. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 
-- **Q3–Q12 are 1–4 Likert agreement**: 1 = Strongly Disagree, 2 = Disagree, 3 = Agree, 4 = Strongly Agree. The scale has no neutral midpoint, so students who are merely "fine" must pick 3, which floors most means around 3.0+. The informative range is roughly 2.8–4.0.
-- **Q13–Q14 are 1–5 overall ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent.
+- **All items use a 1–5 scale.**
+- **Q3–Q12 are Likert agreement items**: 1 = Strongly Disagree, 2 = Disagree, 3 = Neutral, 4 = Agree, 5 = Strongly Agree. The neutral midpoint at 3 means a mean below 3.5 should be read as closer to neutral than positive. The informative range for most sections is roughly 3.3–5.0.
+- **Q13–Q14 are overall quality ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent.
 - **`D/A`** appears as a string in any quantitative column. It means *Doesn't Apply* or *Decline to Answer* — exclude from means. A high D/A rate (>30% on any item) is itself a signal worth noting.
 - **NaN/empty** is common — a student can submit only Likert items or only narrative.
 - **Response rate**: N shown is respondents, not enrolled students. If the user knows enrollment, note it — 10 out of 12 enrolled is very different from 10 out of 35. Response rates below ~50% reduce representativeness and are worth flagging as a caveat.
@@ -89,21 +91,30 @@ The script derives each section's semester from the modal `FilloutDate` timestam
 
 ### 1. Read the inputs
 
-Run the provided script to ingest all uploaded CSVs. First check whether a JSON enrollment file was uploaded alongside the CSVs:
+Run the provided script to ingest all uploaded CSVs. First check whether a zip archive or JSON enrollment file was uploaded:
 
 ```bash
+# Unzip archive if present (Mode B users may upload a zip due to the 20-file limit)
+ZIP=$(ls /mnt/user-data/uploads/*.zip 2>/dev/null | head -1)
+if [ -n "$ZIP" ]; then
+    unzip -q "$ZIP" -d /tmp/evals_unzipped
+    CSV_GLOB="/tmp/evals_unzipped/*.csv"
+else
+    CSV_GLOB="/mnt/user-data/uploads/*.csv"
+fi
+
 # Auto-detect enrollment file if present
 ENROLLMENT=$(ls /mnt/user-data/uploads/*.json 2>/dev/null | head -1)
 if [ -n "$ENROLLMENT" ]; then
-    python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment "$ENROLLMENT"
+    python scripts/parse_evaluations.py $CSV_GLOB --enrollment "$ENROLLMENT"
 else
-    python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv
+    python scripts/parse_evaluations.py $CSV_GLOB
 fi
 ```
 
 It prints three things to stdout:
 - **Per-section means table** — one row per section with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings. When enrollment data is present, adds Enrolled and RR% columns and lists sections below 40% response rate. Use this in Mode A reports.
-- **Per-course summary table** — one row per unique course (e.g., CS149), showing number of terms taught, number of sections, total N, weighted means for Q13 and Q14, and — when enrollment data is present — total enrolled and pooled response rate. Use this as the overview table in Mode B reports.
+- **Per-course summary table** — one row per unique course (e.g., CS149), showing the term range taught (e.g., "Spring 2023 – Fall 2025"), number of sections, total N, weighted means for Q13 and Q14, and — when enrollment data is present — total enrolled and pooled response rate. Use this as the overview table in Mode B reports.
 - **Free-text comments** — all Q15 (strengths) and Q16 (improvements) responses grouped by section. When enrollment data is present, each section header includes its response rate; sections below 40% are flagged prominently.
 
 The script reads section identity from the SubjectID column inside each CSV — it does not use filenames. It sorts output chronologically by term, then by department prefix, course number, and section number.
