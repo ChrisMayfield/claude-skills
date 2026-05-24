@@ -1,6 +1,6 @@
 ---
 name: course-evaluations
-description: "Use this skill to analyze and summarize student course evaluations exported as CSVs — the kind universities send instructors at the end of each term. Triggers on phrases like 'analyze my evaluations', 'summarize student feedback', 'what did students say about my course', or whenever the user uploads one or more CSV files containing student evaluation data with Likert and open-response columns. Also use when the user uploads evaluations spanning multiple semesters or a full promotion period and wants a longitudinal or comparative analysis. The output is a report the instructor can act on, not a generic data summary."
+description: "Use this skill to analyze and summarize student course evaluations exported as CSVs — the kind James Madison University's Department of Computer Science sends instructors at the end of each term. Triggers on phrases like 'analyze my evaluations', 'summarize student feedback', 'what did students say about my course', or whenever the user uploads one or more CSV files containing student evaluation data with Likert and open-response columns. Also use when the user uploads evaluations spanning multiple semesters or a full promotion period and wants a longitudinal or comparative analysis. The output is a report the instructor can act on, not a generic data summary."
 ---
 
 # Course evaluation analysis
@@ -13,7 +13,7 @@ One thing to hold in mind throughout: research on student evaluations of teachin
 
 ## Institutional policy context
 
-At this institution, student feedback surveys:
+At James Madison University, student feedback surveys:
 
 - **May** be used as a formative tool for faculty members.
 - **May** be used as teaching evidence at the faculty member's discretion, when the evidence relates to *course content, rigor, assignments, and learning experiences*.
@@ -21,7 +21,7 @@ At this institution, student feedback surveys:
 - **May not** be used in promotion and tenure decisions without the faculty member's consent.
 - **Should** be used in annual evaluation conferences only as a tool to identify areas of growth.
 
-These constraints shape how to frame the promotion report (Mode B below). Specifically: when writing evidence-oriented language, orient it around what the instructor *did with the course* — revised assignments, changed pacing, restructured assessments — not around personality traits or interpersonal style.
+These constraints apply to **both modes**. In all reports, frame findings around what the instructor *did with the course* — assignment design, assessment structure, pacing decisions, course materials — rather than around personality traits or interpersonal style. This is the right framing for formative use too: it keeps the analysis focused on things the instructor can actually change.
 
 ## Modes
 
@@ -31,10 +31,9 @@ Detect the appropriate mode from context. If ambiguous, ask.
 
 **Mode B — Promotion dossier** (~30 CSVs, 4–6 year period): The instructor wants to document teaching practices and growth over time as part of a promotion case. The report should surface longitudinal patterns — improvements made, what changed, what stayed consistent — and frame findings in terms of course content, rigor, assignments, and learning experiences, not instructor personality.
 
-Before running the script in Mode B, ask the user:
-1. What is the time period covered?
-2. Should the report be organized by course, by curriculum level (intro / core / elective), or both?
-3. Are there specific courses or changes the instructor wants to highlight?
+The time period is inferred from the CSV files themselves — the script's term auto-detection covers this. Before running the script in Mode B, ask the user:
+1. Should the report be organized by course, by curriculum level (intro / core / elective), or both?
+2. Are there specific courses or changes the instructor wants to highlight?
 
 These answers shape the report structure before a single line is written.
 
@@ -305,28 +304,28 @@ Use one markdown table for the quantitative snapshot (Mode A) or overview table 
 
 The following is a *hypothetical* illustration of the target voice — not based on any real evaluation.
 
-**Input (Mode A):** Three CSVs uploaded: one Fall section of BIO 101 (N=22), one Spring section of BIO 101 (N=19), and one Spring section of BIO 205 (N=14). All taught by the same instructor.
+**Input (Mode A):** Three CSVs uploaded: one Fall section of CS 149 (N=24), one Spring section of CS 149 (N=21), and one Spring section of CS 345 (N=16). All taught by the same instructor.
 
 **Output excerpts illustrating the right voice:**
 
-> Instructor overall sits at 4.6 in both BIO 101 sections and 4.4 in BIO 205; course overall lags at 4.0–4.2 across the board. The consistent gap between instructor and course ratings points to course-design or materials issues rather than teaching problems.
+> Instructor overall sits at 4.5 in both CS 149 sections and 4.6 in CS 345; course overall lags at 3.9–4.1 in CS 149 but reaches 4.4 in CS 345. The consistent gap between instructor and course ratings in CS 149 points to course-design or materials issues rather than teaching problems — and is consistent with what intro required courses typically show.
 
-> Across both BIO 101 sections, the lowest individual item is Q10 (materials valuable) at 3.4 and 3.5. Four students named the lab manual specifically — "outdated," "doesn't match what we do in lab." This is the clearest single signal in the dataset.
+> Across both CS 149 sections, the lowest individual item is Q11 (exams reflect objectives) at 3.2 and 3.3. Five students across the two sections described the exams as covering material that felt disconnected from the programming assignments. This is the clearest single signal in the dataset and sits squarely in assessment design, which the instructor can address.
 
-> **BIO 101 — Spring (Sections 0003 & 0004, N=41 combined).** Both sections agree strongly on what worked: clear lecture structure, accessible office hours, and timely feedback on exams. The Fall section (0003) is slightly warmer on course materials than Spring (0004), but the gap is small given the sample sizes.
+> **CS 149 — Spring (Sections 0003 & 0004, N=45 combined).** Both sections valued the structured lab exercises and the pace of early lectures. The Fall section (0003) was warmer on assignment feedback turnaround than Spring (0004), where three students mentioned waiting more than a week for grades on larger projects. The gap is plausible given different section sizes but worth watching.
 
-> **Pacing in the second half** — flagged in BIO 101 Fall (three students), BIO 101 Spring (two students), and once in BIO 205. In BIO 101 it's the cellular respiration unit; in BIO 205 it's the population genetics section.
+> **Pacing in the second half of the semester** — flagged in CS 149 Fall (four students) and CS 149 Spring (two students). In both cases students pointed to the recursion and linked-list units arriving in the same three-week stretch. No comparable pacing concern appeared in CS 345.
 
-> **Group work was polarizing in BIO 205.** Four students named group projects as the best part of the course; three named them as the worst. The split appears to be about *how groups were formed* — students who self-selected were positive; students assigned to groups were negative. A change to group-formation policy might resolve most of the friction.
+> **Group project structure was polarizing in CS 345.** Five students named the team project as the most valuable part of the course; three named it as the most frustrating. The frustration comments were specific: uneven contribution and no mechanism for peer accountability. The positive comments came from students who described their teams as self-organized. A structured peer-evaluation component might resolve most of the friction.
 
-> One student in BIO 101 Spring wrote that they came in afraid of biology and were leaving as a major. This kind of comment doesn't appear in the numbers and isn't a "theme" — but it's worth surfacing.
+> One student in CS 149 Spring wrote that they had never written a program before and were now planning to major in CS. This kind of comment doesn't appear in the numbers and isn't a "theme" — but it's worth surfacing.
 
 ---
 
 **Output excerpt illustrating Mode B voice** (same courses, now imagined across 5 years):
 
-> **BIO 101 (Introductory, required for majors).** Taught 8 times over the review period, total N=184. Scores on course materials (Q10) were notably low — 3.3–3.5 — through Fall 2021. This friction appears repeatedly in Q16 comments, with students citing the lab manual as misaligned with in-class activities. It does not appear in comments after Spring 2022, suggesting a materials revision resolved it. Assignment value (Q9) has been among the highest-rated items throughout the period, with students consistently naming the weekly coding exercises as the most useful component of the course.
+> **CS 149 — Introduction to Programming (intro, required for CS majors).** Taught 9 times over the review period, total N=201. Q11 (exams reflect objectives) was the lowest-rated item in six of those nine terms, consistently in the 3.1–3.4 range through Spring 2022. Student comments in Q16 during that period describe the exams as emphasizing syntax recall over problem-solving, which did not match how the labs and assignments were structured. Q11 scores rise to 3.7–3.9 beginning Fall 2022 and comments about exam alignment largely disappear, suggesting a revision to assessment design. Assignment value (Q9) has remained among the highest-rated items throughout the review period, with students in nearly every term naming the weekly lab exercises as the most useful part of the course.
 
-> Intro courses of this type typically rate lower on overall scales than upper-division electives, and BIO 101's course overall (mean 4.0 across the period) reflects that pattern. This is consistent with institutional and disciplinary norms rather than evidence of teaching quality differences.
+> CS 149 course overall averages 3.9 across the review period, lower than the instructor's upper-division scores. This is consistent with the pattern research identifies for required introductory courses serving students with wide variation in prior experience — it reflects course-level structural factors rather than differences in teaching quality.
 
-Note the Mode B voice: it frames evidence in terms of course materials, assignments, and learning activities; attributes a score change to a specific course action; and contextualizes the lower intro-course scores rather than leaving them unexplained.
+Note the Mode B voice: it frames evidence in terms of assessment design and assignment structure; attributes a score change to a specific course revision; contextualizes the lower intro-course scores for a promotion committee; and stays entirely clear of language about instructor personality or style.
