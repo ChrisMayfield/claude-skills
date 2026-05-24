@@ -7,9 +7,7 @@ description: "Use this skill to analyze and summarize student course evaluations
 
 ## Why this skill exists
 
-End-of-term evaluations land in instructors' inboxes as CSVs with awkward column names, mixed scales, and a pile of free-text comments. The naive output — "here's a table of means" — misses what the instructor actually wants: **what should I keep doing, and what should I change.** This skill produces a report oriented around that question, grounded in both the numbers and the qualitative comments.
-
-One thing to hold in mind throughout: research on student evaluations of teaching (SET) consistently finds that ratings reflect more than teaching quality alone. Course level, whether a course is required, grade expectations, class size, and sometimes instructor demographics all affect scores in ways that have nothing to do with how well someone teaches. Treat the output as structured student feedback to act on — not as an objective measure of teaching effectiveness.
+The goal is a report the instructor can act on — not a table of means. Research on student evaluations of teaching (SET) consistently finds that ratings reflect more than teaching quality alone: course level, whether a course is required, grade expectations, class size, and sometimes instructor demographics all affect scores in ways that have nothing to do with how well someone teaches. Treat the output as structured student feedback, not an objective measure of teaching effectiveness.
 
 ## Institutional policy context
 
@@ -270,11 +268,8 @@ Research consistently shows that intro and required courses rate lower than uppe
 **A single semester is a snapshot.**
 Patterns that recur across two or more semesters — especially when supported by qualitative themes — are the findings worth acting on. One term's data is a starting point, not a verdict.
 
-**Weight by repetition, not by length.**
-A student who writes three paragraphs about one issue counts the same as a student who writes one sentence. The signal is in *how many students raise the same thing*. If one detailed complaint is the only mention, label it as such ("one student raised…") rather than presenting it as a theme.
-
-**Do not sanitize, but also do not pile on.**
-Surface negative themes clearly — softening them defeats the point — but don't repeat the same criticism three different ways. State it once with specifics, note its frequency, and move on.
+**Weight by repetition; surface negatives clearly but don't pile on.**
+The signal is in how many students raise the same thing, not how much any one student wrote. A student who writes three paragraphs about one issue counts the same as a student who writes one sentence. If one detailed complaint is the only mention, label it as such ("one student raised…"). Surface negative themes directly — softening them defeats the point — but don't repeat the same criticism three different ways. State it once with specifics, note its frequency, and move on.
 
 **Notice when complaints are mutually contradictory.**
 "Lecture too fast" and "more lecture please" from different students is a real and unresolvable signal — usually about variance in student preparation. Naming the contradiction is more useful than pretending it doesn't exist.
@@ -285,14 +280,8 @@ Surface negative themes clearly — softening them defeats the point — but don
 **Quote sparingly.**
 At most one short direct quote per theme, only when the exact wording carries information that paraphrase would lose. Never more than ~15 words. Most content should be in your own words.
 
-**Watch for "course vs. instructor" attribution.**
-When the instructor overall rating is notably higher than the course overall rating, that pattern usually means the criticism is about course design (assignments, exams, pacing, materials) rather than teaching. Call this out when it appears — it's particularly useful framing in a promotion report.
-
 **Watch for high D/A rates.**
 If many students chose D/A on Q7 (effective outside of class), they may not have interacted with the instructor outside class — that itself is information. Mention D/A rates only when notably high.
-
-**Acknowledge anonymity.**
-Don't speculate about which student wrote which comment. Don't try to infer demographics, grade level, or major from the writing.
 
 ## Output format
 
