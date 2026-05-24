@@ -47,18 +47,39 @@ Columns (in order):
 |---|---|---|
 | `SubjectID` | Course-section identifier, e.g. `CS149-0005` | string |
 | `SecondarySubjectID` | Internal course key | int |
+| `EnrollmentType` | Present only in Fall 2022+ exports | string |
 | `FilloutDate` | Timestamp of submission | string |
-| `Q3` … `Q12` | Ten Likert agreement items (see below) | 1–5 numeric, or `D/A` |
+| `Q3` … `Q12` | Ten Likert agreement items (see Scales) | numeric, or `D/A` |
 | `Q13` | Instructor overall rating | 1–5 numeric, or `D/A` |
 | `Q14` | Course overall rating | 1–5 numeric, or `D/A` |
 | `Q15` | "What are the strengths of the instructor or course?" | free text |
 | `Q16` | "How could the teaching of this course be improved?" | free text |
-| `Unnamed: 17` | Empty trailing column from the export | ignore |
+| `Unnamed: 17` or `Unnamed: 18` | Empty trailing column | ignore |
+
+The `EnrollmentType` column is not used by the script; its presence or absence is the reliable indicator of which scale era the CSV belongs to (see Scales). The trailing unnamed column is `Unnamed: 17` in pre-Fall 2022 exports (no EnrollmentType) and `Unnamed: 18` in Fall 2022+ exports.
 
 The Q3–Q12 wording is fixed; each column name contains the question text duplicated, like:
 `Q3_The instructor taught clearly and stressed important points._The instructor taught clearly and stressed important points.`
 
 The provided script renames these by substring match, so it stays robust if a future export reorders columns or tweaks wording slightly.
+
+### Scales
+
+The Q3–Q12 scale changed in Fall 2022. The script auto-detects which scale applies to each CSV by checking for the presence of the `EnrollmentType` column.
+
+**Pre-Fall 2022 (old scale — no `EnrollmentType` column):**
+- Q3–Q12: 1 = No Basis to Judge, 2 = Strongly Disagree, 3 = Somewhat Disagree, 4 = Somewhat Agree, 5 = Strongly Agree
+- "No Basis to Judge" (value 1) is excluded from means, just like D/A. The effective range is 2–5.
+- The script labels these rows `2-5†` in the Scale column.
+
+**Fall 2022 and later (new scale — `EnrollmentType` column present):**
+- Q3–Q12: 1 = Strongly Disagree, 2 = Somewhat Disagree, 3 = Somewhat Agree, 4 = Strongly Agree
+- All values 1–4 are valid; "1" is not excluded.
+- The script labels these rows `1-4` in the Scale column.
+
+**Q13–Q14 (all eras):** 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent. This scale did not change and is directly comparable across all time periods.
+
+**Cross-era comparison of Q3–Q12 means is not valid.** A mean of 4.5 on the old scale and a mean of 3.5 on the new scale cannot be directly compared — they are on different numeric ranges with different anchors. When a dataset spans the Fall 2022 boundary, the script flags affected sections with `mixed *` in the course summary table and prints a `** MIXED ERAS **` warning in the per-section table. In the report, acknowledge the scale break explicitly and rely on Q13–Q14 for any cross-era quantitative comparisons. Qualitative direction (did things improve, stay consistent, or worsen?) can still be assessed from the comments across both eras.
 
 ### Optional enrollment file
 
@@ -74,14 +95,12 @@ To include response rates, upload a JSON file (alongside the CSVs) mapping each 
 
 SubjectIDs not present in the file are silently skipped. Partial coverage is fine. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 
-- **All items use a 1–5 scale.**
-- **Q3–Q12 are Likert agreement items**: 1 = Strongly Disagree, 2 = Disagree, 3 = Neutral, 4 = Agree, 5 = Strongly Agree. The neutral midpoint at 3 means a mean below 3.5 should be read as closer to neutral than positive. The informative range for most sections is roughly 3.3–5.0.
-- **Q13–Q14 are overall quality ratings**: 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent.
-- **`D/A`** appears as a string in any quantitative column. It means *Doesn't Apply* or *Decline to Answer* — exclude from means. A high D/A rate (>30% on any item) is itself a signal worth noting.
-- **NaN/empty** is common — a student can submit only Likert items or only narrative.
-- **Response rate**: N shown is respondents, not enrolled students. If the user knows enrollment, note it — 10 out of 12 enrolled is very different from 10 out of 35. Response rates below ~50% reduce representativeness and are worth flagging as a caveat.
+### Other data notes
 
-**Don't use absolute thresholds for "good" vs. "bad" means.** What counts as strong or weak depends on institutional and disciplinary norms. Instead, surface signal *relatively*: flag the lowest 1–2 individual items per section, and any item that sits ≥0.3 below that section's own average. That's what the instructor can act on.
+- **`D/A`** appears as a string in any quantitative column and means *Doesn't Apply* or *Decline to Answer*. It is excluded from means in all eras. A high D/A rate (≥30% on any item) is worth noting in the report.
+- **NaN/empty** is common — a student can submit only Likert items or only narrative; this is normal and should not be treated as missing data.
+- **Don't use absolute thresholds for "good" vs. "bad" means.** Surface signal *relatively*: flag the lowest 1–2 individual items per section, and any item that sits ≥0.3 below that section's own average. That's actionable; a single number against an unmarked standard is not.
+- **Response rate**: N shown is respondents, not enrolled students. Without an enrollment file, flag small absolute N (below ~10) as a reliability caveat.
 
 ### Term auto-detection
 
@@ -288,6 +307,9 @@ These apply to both modes.
 
 **Calibrate the numbers honestly, but don't overinterpret small differences.**
 With N=12–24, a 0.1 gap between sections is meaningless and a 0.3 gap is suggestive at best. Report the means; don't rank sections by tiny differences. The exception is when *every item* in one section trends lower than another — that's a real pattern even if no single gap is large.
+
+**Never compare Q3–Q12 means numerically across the Fall 2022 scale change.**
+Old-scale means (2–5) and new-scale means (1–4) use different ranges and different anchors. When a course appears in both eras (flagged `mixed *` in the course summary), rely on Q13–Q14 for quantitative trend statements and on the qualitative comments for everything else. You can say "students in both eras consistently valued X" based on comments; you cannot say "Q3 improved from 4.5 to 3.8."
 
 **Treat the lowest individual items as the highest signal.**
 A section with a 4.5 instructor rating and a 3.3 on Q11 (exams reflect objectives) is telling you something specific. The overall rating averages over everything; the individual items localize the issue. Always look at the lowest 2–3 individual items per section.

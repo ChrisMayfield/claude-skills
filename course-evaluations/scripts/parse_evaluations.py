@@ -18,12 +18,25 @@ summary tables and section comment headers. Sections below 40% response
 rate are flagged — below this threshold self-selection bias becomes a
 meaningful concern.
 
+Scale history:
+  Before Fall 2022 (no EnrollmentType column in CSV):
+    Q3-Q12: 1=No Basis to Judge, 2=Strongly Disagree, 3=Somewhat Disagree,
+            4=Somewhat Agree, 5=Strongly Agree  (effective range 2-5)
+    "1" responses are excluded from means and counted as NB (No Basis).
+
+  Fall 2022 and later (EnrollmentType column present in CSV):
+    Q3-Q12: 1=Strongly Disagree, 2=Somewhat Disagree,
+            3=Somewhat Agree, 4=Strongly Agree  (range 1-4)
+
+  Q13-Q14 use a 1-5 quality scale in both eras and are directly comparable
+  across the scale change.
+
 Robustness notes:
 - The SubjectID column inside each CSV is the authoritative section
   identifier. Filenames are ignored for identification purposes.
 - Columns are identified by *substring* of the question text, so the script
   keeps working if the exporter changes column order or tweaks wording slightly.
-- "D/A" string values are converted to NaN before computing means.
+- "D/A" string values are excluded from means in all eras.
 - Missing items emit a warning but do not abort.
 """
 
@@ -36,31 +49,30 @@ from pathlib import Path
 from collections import defaultdict
 import pandas as pd
 
-# Each entry is (short_name, substring_to_match_in_column_name, scale_max).
-# All items use a 1–5 scale. Q3–Q12 are Likert agreement items
-# (1=Strongly Disagree … 5=Strongly Agree, with 3=Neutral as midpoint).
-# Q13–Q14 are overall quality ratings (1=Poor … 5=Excellent).
-# scale_max is retained for documentation but not used in computation.
+# Each entry is (short_name, substring_to_match_in_column_name, is_q13_q14).
+# is_q13_q14 flags the two overall-rating items, which use a fixed 1–5 scale
+# across both survey eras and never treat "1" as No Basis to Judge.
 ITEMS = [
-    ("Q3_TaughtClearly",       "taught clearly",                         5),
-    ("Q4_WellPrepared",        "well-prepared",                          5),
-    ("Q5_ConcernRespect",      "concern and respect",                    5),
-    ("Q6_HelpfulFeedback",     "helpful feedback",                       5),
-    ("Q7_HelpOutsideClass",    "outside of class",                       5),
-    ("Q8_CourseStructure",     "structure of the course",                5),
-    ("Q9_AssignmentsValuable", "assignments were valuable",              5),
-    ("Q10_MaterialsValuable",  "course materials",                       5),
-    ("Q11_ExamsReflective",    "exams and other assessments",            5),
-    ("Q12_LearnedAGreatDeal",  "learned a great deal",                   5),
-    ("Q13_InstructorOverall",  "instructor overall rating",              5),
-    ("Q14_CourseOverall",      "course overall rating",                  5),
+    ("Q3_TaughtClearly",       "taught clearly",                False),
+    ("Q4_WellPrepared",        "well-prepared",                 False),
+    ("Q5_ConcernRespect",      "concern and respect",           False),
+    ("Q6_HelpfulFeedback",     "helpful feedback",              False),
+    ("Q7_HelpOutsideClass",    "outside of class",              False),
+    ("Q8_CourseStructure",     "structure of the course",       False),
+    ("Q9_AssignmentsValuable", "assignments were valuable",     False),
+    ("Q10_MaterialsValuable",  "course materials",              False),
+    ("Q11_ExamsReflective",    "exams and other assessments",   False),
+    ("Q12_LearnedAGreatDeal",  "learned a great deal",          False),
+    ("Q13_InstructorOverall",  "instructor overall rating",     True),
+    ("Q14_CourseOverall",      "course overall rating",         True),
 ]
 
 # Substrings used to locate specific columns by partial name match.
-STRENGTHS_KEY    = "strengths"             # Q15: open-text strengths
-IMPROVEMENTS_KEY = "could the teaching"    # Q16: open-text improvements
-FILLOUT_KEY      = "filloutdate"           # submission timestamp
-SUBJECT_KEY      = "subjectid"             # course-section identifier
+STRENGTHS_KEY      = "strengths"             # Q15: open-text strengths
+IMPROVEMENTS_KEY   = "could the teaching"    # Q16: open-text improvements
+FILLOUT_KEY        = "filloutdate"           # submission timestamp
+SUBJECT_KEY        = "subjectid"             # course-section identifier
+ENROLLMENT_TYPE_KEY = "enrollmenttype"       # present only in new-scale CSVs
 
 LOW_RR_THRESHOLD = 0.40   # response rates below this are flagged in output
 
@@ -95,6 +107,17 @@ def detect_semester(df: pd.DataFrame) -> str:
     month_year = list(zip(parsed.dt.month, parsed.dt.year))
     modal_month, modal_year = max(set(month_year), key=month_year.count)
     return f"{TERM_BY_MONTH.get(modal_month, 'Unknown')} {modal_year}"
+
+
+def detect_scale(df: pd.DataFrame) -> str:
+    """Return 'old' or 'new' based on whether the EnrollmentType column is present.
+
+    The EnrollmentType column was added in Fall 2022, coinciding with the
+    Q3-Q12 scale change from 1-5 (1=No Basis to Judge) to 1-4 (1=Strongly
+    Disagree). Its presence is the most reliable indicator of which era the
+    CSV is from.
+    """
+    return "new" if find_column(df, ENROLLMENT_TYPE_KEY) is not None else "old"
 
 
 def find_column(df: pd.DataFrame, needle: str) -> str | None:
@@ -184,6 +207,7 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
     """Parse one CSV and return a result dict with quantitative means and raw comments.
 
     `enrollment`, if provided, is used to compute response rate for this section.
+    Scale (old vs new) is auto-detected from the presence of the EnrollmentType column.
     """
     df = pd.read_csv(path)
 
@@ -197,7 +221,8 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
         print(f"  [warn] {path.name}: SubjectID column not found; "
               f"using filename '{path.stem}' as section ID", file=sys.stderr)
 
-    term = detect_semester(df)
+    term  = detect_semester(df)
+    scale = detect_scale(df)
     n_total = len(df)
 
     enrolled = enrollment.get(section_id) if enrollment else None
@@ -209,25 +234,40 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
             print(f"  [warn] {section_id}: not found in enrollment file; "
                   f"response rate unavailable", file=sys.stderr)
 
-    # For each Likert item, count explicit D/A responses separately before
-    # coercing to numeric, so they don't silently become NaN.
-    means = {}
-    da_counts = {}
+    # Compute means, tracking D/A and (for old-scale Q3-Q12) No Basis to Judge
+    # responses separately so they don't silently inflate missing-data counts.
+    means      = {}
+    da_counts  = {}
+    nb_counts  = {}   # "No Basis to Judge" — old scale only, Q3-Q12 only
     n_responded = {}
-    for short, needle, _scale in ITEMS:
+
+    for short, needle, is_overall in ITEMS:
         col = find_column(df, needle)
         if col is None:
             print(f"  [warn] {section_id}: column for '{needle}' not found; skipping",
                   file=sys.stderr)
-            means[short] = None
-            da_counts[short] = None
-            n_responded[short] = None
+            means[short] = da_counts[short] = nb_counts[short] = n_responded[short] = None
             continue
+
         raw = df[col]
+
+        # Explicit D/A responses (appear as the string "D/A" in any era).
         da = (raw.astype(str).str.upper().str.strip() == "D/A").sum()
+
         numeric = pd.to_numeric(raw, errors="coerce")
-        means[short] = round(float(numeric.mean()), 2) if numeric.notna().any() else None
-        da_counts[short] = int(da)
+
+        # On old-scale Q3-Q12, a numeric value of 1 means "No Basis to Judge"
+        # and should be excluded from means, just as D/A is. Q13-Q14 use a
+        # fixed 1-5 quality scale in all eras, so "1" there is a valid rating.
+        if scale == "old" and not is_overall:
+            nb = int((numeric == 1).sum())
+            numeric = numeric.where(numeric != 1)   # replace 1s with NaN
+        else:
+            nb = 0
+
+        means[short]      = round(float(numeric.mean()), 2) if numeric.notna().any() else None
+        da_counts[short]  = int(da)
+        nb_counts[short]  = nb
         n_responded[short] = int(numeric.notna().sum())
 
     strengths_col    = find_column(df, STRENGTHS_KEY)
@@ -244,11 +284,13 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
     return {
         "section_id":    section_id,
         "term":          term,
+        "scale":         scale,
         "n_total":       n_total,
         "enrolled":      enrolled,
         "response_rate": response_rate,
         "means":         means,
         "da_counts":     da_counts,
+        "nb_counts":     nb_counts,
         "n_responded":   n_responded,
         "strengths":     strengths,
         "improvements":  improvements,
@@ -261,28 +303,44 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
 
 def print_means_table(results: list[dict]) -> None:
     """Print the per-section quantitative summary table."""
-    has_rr = any(r["response_rate"] is not None for r in results)
+    has_rr      = any(r["response_rate"] is not None for r in results)
+    has_old     = any(r["scale"] == "old" for r in results)
+    has_new     = any(r["scale"] == "new" for r in results)
+    mixed_eras  = has_old and has_new
 
     print("=" * 78)
     print("QUANTITATIVE SUMMARY — PER SECTION")
     print("=" * 78)
-    print("All items use a 1–5 scale.")
-    print("Q3-Q12: 1=Strongly Disagree, 2=Disagree, 3=Neutral, 4=Agree, 5=Strongly Agree")
-    print("Q13-Q14: 1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent")
-    print("D/A responses excluded from means. Term auto-detected from modal FilloutDate.")
+    if has_new:
+        print("New scale (Fall 2022+) — Q3-Q12: 1=Strongly Disagree, 2=Somewhat Disagree,")
+        print("                                  3=Somewhat Agree, 4=Strongly Agree")
+    if has_old:
+        print("Old scale (pre-Fall 2022) — Q3-Q12: 2=Strongly Disagree, 3=Somewhat Disagree,")
+        print("                                     4=Somewhat Agree, 5=Strongly Agree")
+        print("                            (1=No Basis to Judge, excluded from means; shown as NB)")
+    print("Q13-Q14 (all eras): 1=Poor, 2=Fair, 3=Good, 4=Very Good, 5=Excellent")
+    print("D/A responses excluded from means.")
+    if mixed_eras:
+        print()
+        print("** MIXED ERAS: Q3-Q12 means are on different scales and cannot be")
+        print("   compared directly across the Fall 2022 boundary. Q13-Q14 are comparable.")
+    print("Term auto-detected from modal FilloutDate.")
     if has_rr:
         print(f"RR% = response rate (respondents / enrolled)."
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}% threshold.")
     print()
 
-    headers = ["Section", "Term", "N"]
+    headers = ["Section", "Term", "Scale", "N"]
     if has_rr:
         headers += ["Enrolled", "RR%"]
     headers += [short for short, _, _ in ITEMS]
     print("\t".join(headers))
 
     for r in results:
-        row = [r["section_id"], r["term"], str(r["n_total"])]
+        # Display scale as the effective range so the reader sees immediately
+        # what the numbers mean.
+        scale_label = "1-4" if r["scale"] == "new" else "2-5†"
+        row = [r["section_id"], r["term"], scale_label, str(r["n_total"])]
         if has_rr:
             row.append(str(r["enrolled"]) if r["enrolled"] is not None else "—")
             row.append(fmt_rr(r["response_rate"]))
@@ -290,6 +348,9 @@ def print_means_table(results: list[dict]) -> None:
             v = r["means"].get(short)
             row.append(f"{v:.2f}" if v is not None else "—")
         print("\t".join(row))
+
+    if has_old:
+        print("\n† Old scale: Q3-Q12 effective range is 2-5 (1=No Basis excluded).")
 
     if has_rr:
         low_rr = [r for r in results
@@ -305,18 +366,24 @@ def print_means_table(results: list[dict]) -> None:
         else:
             print("  (none)")
 
-    print("\nNotable D/A rates (>=30% of responses on any item):")
+    # Flag notable D/A and NB rates together
+    print("\nNotable exclusion rates (D/A or No Basis >= 30% of responses on any item):")
     any_flagged = False
     for r in results:
-        for short, _, _ in ITEMS:
+        for short, _, is_overall in ITEMS:
             n_resp = r["n_responded"].get(short)
-            da = r["da_counts"].get(short)
-            if n_resp is None or da is None:
+            da     = r["da_counts"].get(short) or 0
+            nb     = r["nb_counts"].get(short) or 0
+            if n_resp is None:
                 continue
-            n_with_da = n_resp + da
-            if n_with_da >= 5 and da / n_with_da >= 0.30:
-                print(f"  {r['section_id']} {short}: {da}/{n_with_da} D/A "
-                      f"({100*da/n_with_da:.0f}%)")
+            excluded = da + nb
+            n_with_excluded = n_resp + excluded
+            if n_with_excluded >= 5 and excluded / n_with_excluded >= 0.30:
+                parts = []
+                if da: parts.append(f"{da} D/A")
+                if nb: parts.append(f"{nb} NB")
+                print(f"  {r['section_id']} {short}: {' + '.join(parts)} "
+                      f"/ {n_with_excluded} ({100*excluded/n_with_excluded:.0f}%)")
                 any_flagged = True
     if not any_flagged:
         print("  (none)")
@@ -328,6 +395,7 @@ def print_course_summary_table(results: list[dict]) -> None:
     Q13/Q14 means are weighted by n_responded so larger sections contribute
     proportionally more. Pooled response rate is sum(respondents)/sum(enrolled)
     rather than a mean of per-section rates, which would over-weight small sections.
+    Courses with sections from both scale eras are flagged.
     """
     has_rr = any(r["response_rate"] is not None for r in results)
 
@@ -347,13 +415,14 @@ def print_course_summary_table(results: list[dict]) -> None:
     print("COURSE SUMMARY (aggregated across all sections and terms)")
     print("=" * 78)
     print("Q13 and Q14 means are weighted by number of respondents per section.")
-    print("D/A responses excluded from means.")
+    print("D/A and No Basis responses excluded from means.")
+    print("* = sections from both scale eras present; Q3-Q12 means not cross-comparable.")
     if has_rr:
         print(f"Pooled RR% = total respondents / total enrolled across all sections."
               f" ! = below {LOW_RR_THRESHOLD*100:.0f}%.")
     print()
 
-    headers = ["Course", "Term range", "Sections", "Total N"]
+    headers = ["Course", "Term range", "Scale(s)", "Sections", "Total N"]
     if has_rr:
         headers += ["Total Enrolled", "Pooled RR%"]
     headers += ["Q13_InstructorOverall", "Q14_CourseOverall"]
@@ -366,6 +435,14 @@ def print_course_summary_table(results: list[dict]) -> None:
         # which is far more informative for a longitudinal promotion report.
         terms = sorted({r["term"] for r in sections}, key=term_sort_key)
         term_range = terms[0] if len(terms) == 1 else f"{terms[0]} – {terms[-1]}"
+
+        scales_present = {r["scale"] for r in sections}
+        if scales_present == {"old"}:
+            scale_label = "2-5†"
+        elif scales_present == {"new"}:
+            scale_label = "1-4"
+        else:
+            scale_label = "mixed *"   # has sections from both eras
 
         n_sections = len(sections)
         total_n    = sum(r["n_total"] for r in sections)
@@ -392,7 +469,7 @@ def print_course_summary_table(results: list[dict]) -> None:
             )
             return f"{wsum / total_weight:.2f}"
 
-        row = [course, term_range, str(n_sections), str(total_n)]
+        row = [course, term_range, scale_label, str(n_sections), str(total_n)]
         if has_rr:
             row.append(str(total_enrolled) if total_enrolled is not None else "—")
             row.append(fmt_rr(pooled_rr))
@@ -411,7 +488,8 @@ def print_comments(results: list[dict]) -> None:
         else:
             rr_note = ""
 
-        label = f"{r['section_id']} — {r['term']}{rr_note}"
+        scale_note = "" if r["scale"] == "new" else "  [old scale: Q3-Q12 range 2-5]"
+        label = f"{r['section_id']} — {r['term']}{scale_note}{rr_note}"
 
         print("\n" + "=" * 78)
         print(f"{label}")
