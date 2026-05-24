@@ -1,6 +1,6 @@
 ---
 name: course-evaluations
-description: "Use this skill to analyze and summarize student course evaluations exported as CSVs — the kind James Madison University's Department of Computer Science sends instructors at the end of each term. Triggers on phrases like 'analyze my evaluations', 'summarize student feedback', 'what did students say about my course', or whenever the user uploads one or more CSV files containing student evaluation data with Likert and open-response columns. Also use when the user uploads evaluations spanning multiple semesters or a full promotion period and wants a longitudinal or comparative analysis. The output is a report the instructor can act on, not a generic data summary."
+description: "Use this skill to analyze and summarize student course evaluations exported as CSVs — the kind James Madison University sends instructors at the end of each term. Triggers on phrases like 'analyze my evaluations', 'summarize student feedback', 'what did students say about my course', or whenever the user uploads one or more CSV files containing student evaluation data with Likert and open-response columns. Also use when the user uploads evaluations spanning multiple semesters or a full promotion period and wants a longitudinal or comparative analysis. The output is a report the instructor can act on, not a generic data summary."
 ---
 
 # Course evaluation analysis
@@ -39,7 +39,7 @@ These answers shape the report structure before a single line is written.
 
 ## File format
 
-Each CSV is one section. The **SubjectID column inside the CSV** is the authoritative identifier for the course-section (e.g., `CS149-0005`). Filenames are arbitrary — do not rely on them for course or section identification.
+The evaluations are administered by James Madison University; the specific survey questions (Q3–Q16) are defined by the CS department. Each CSV is one section. The **SubjectID column inside the CSV** is the authoritative identifier for the course-section (e.g., `CS149-0005`). Filenames are arbitrary — do not rely on them for course or section identification.
 
 Columns (in order):
 
@@ -304,7 +304,7 @@ Use one markdown table for the quantitative snapshot (Mode A) or overview table 
 
 The following is a *hypothetical* illustration of the target voice — not based on any real evaluation.
 
-**Input (Mode A):** Three CSVs uploaded: one Fall section of CS 149 (N=24), one Spring section of CS 149 (N=21), and one Spring section of CS 345 (N=16). All taught by the same instructor.
+**Input:** Three CSVs uploaded: one Fall section of CS 149 (N=24), one Spring section of CS 149 (N=21), and one Spring section of CS 345 (N=16). All taught by the same instructor.
 
 **Output excerpts illustrating the right voice:**
 
