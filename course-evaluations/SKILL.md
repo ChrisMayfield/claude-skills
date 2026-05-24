@@ -83,9 +83,10 @@ Run the provided script to ingest all uploaded CSVs at once:
 python scripts/parse_evaluations.py /mnt/user-data/uploads/*.csv
 ```
 
-It prints two things to stdout:
-- A means table across all sections (one row per file) with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings.
-- A grouped dump of all Q15 (strengths) and Q16 (improvements) free-text responses per section.
+It prints three things to stdout:
+- **Per-section means table** — one row per section with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings. Use this in Mode A reports.
+- **Per-course summary table** — one row per unique course (e.g., CS149), showing number of terms taught, number of sections, total N, and weighted means for Q13 and Q14 (weighted by respondents per section, D/A excluded). Use this as the overview table in Mode B reports.
+- **Free-text comments** — all Q15 (strengths) and Q16 (improvements) responses grouped by section.
 
 The script reads section identity from the SubjectID column inside each CSV — it does not use filenames. It sorts output chronologically by term, then by department prefix, course number, and section number.
 
@@ -184,10 +185,10 @@ reader understands this is one source of evidence among many.>
 
 ## Overview
 
-<Quantitative summary table: one row per unique course (not per section),
-showing number of terms offered, total N across all sections, and mean
-Q13 (instructor overall) and Q14 (course overall) across all sections.
-This gives the reader the full picture before the narrative begins.>
+<Paste the per-course summary table produced by the script. It shows
+number of terms, sections, total N, and weighted Q13/Q14 means for each
+course. This gives the reader the full quantitative picture before the
+narrative begins.>
 
 <2–3 sentences on overall patterns: are scores consistent across the
 period? Are there curriculum-level differences (intro vs. elective)

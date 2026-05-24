@@ -215,6 +215,83 @@ def print_means_table(results: list[dict]) -> None:
         print("  (none)")
 
 
+def course_key(section_id: str) -> str:
+    """
+    Extract the course identifier (dept + number) from a section ID.
+    'CS149-0005' -> 'CS149', 'MATH235-001' -> 'MATH235'.
+    Falls back to the full section_id if the pattern doesn't match.
+    """
+    m = _SECTION_ID_RE.match(section_id)
+    if m:
+        return f"{m.group(1).upper()}{m.group(2)}"
+    return section_id
+
+
+def print_course_summary_table(results: list[dict]) -> None:
+    """
+    Per-course aggregate table for multi-semester (Mode B) use.
+    One row per unique course; columns are terms offered, total N,
+    and weighted means for Q13 and Q14.
+    Weighted means use n_responded (D/A excluded) as weights.
+    """
+    from collections import defaultdict
+
+    # Group results by course key
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for r in results:
+        groups[course_key(r["section_id"])].append(r)
+
+    # Sort courses the same way as section results (dept, course number)
+    def course_sort_key(course: str) -> tuple:
+        m = re.match(r"^([A-Za-z]+)(\d+)$", course)
+        if m:
+            return (m.group(1).upper(), int(m.group(2)))
+        return ("ZZZZ", 99999)
+
+    sorted_courses = sorted(groups.keys(), key=course_sort_key)
+
+    print("\n" + "=" * 78)
+    print("COURSE SUMMARY (aggregated across all sections and terms)")
+    print("=" * 78)
+    print("Q13 and Q14 means are weighted by number of respondents per section.")
+    print("D/A responses excluded from means.\n")
+
+    headers = ["Course", "Terms", "Sections", "Total N", "Q13_InstructorOverall", "Q14_CourseOverall"]
+    print("\t".join(headers))
+
+    for course in sorted_courses:
+        sections = groups[course]
+        terms = sorted(
+            {r["term"] for r in sections},
+            key=lambda t: sort_key({"term": t, "section_id": ""})
+        )
+        n_terms = len(terms)
+        n_sections = len(sections)
+        total_n = sum(r["n_total"] for r in sections)
+
+        def weighted_mean(short: str) -> str:
+            total_weight = sum(
+                r["n_responded"].get(short) or 0 for r in sections
+            )
+            if total_weight == 0:
+                return "—"
+            wsum = sum(
+                (r["means"].get(short) or 0) * (r["n_responded"].get(short) or 0)
+                for r in sections
+            )
+            return f"{wsum / total_weight:.2f}"
+
+        row = [
+            course,
+            str(n_terms),
+            str(n_sections),
+            str(total_n),
+            weighted_mean("Q13_InstructorOverall"),
+            weighted_mean("Q14_CourseOverall"),
+        ]
+        print("\t".join(row))
+
+
 def print_comments(results: list[dict]) -> None:
     for r in results:
         label = f"{r['section_id']} — {r['term']}"
@@ -266,6 +343,7 @@ def main():
     results.sort(key=sort_key)
 
     print_means_table(results)
+    print_course_summary_table(results)
     print_comments(results)
 
 
