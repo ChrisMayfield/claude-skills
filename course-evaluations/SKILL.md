@@ -25,14 +25,14 @@ These constraints apply to **both modes**. In all reports, frame findings around
 
 Detect the appropriate mode from context. If ambiguous, ask.
 
-**Mode A — Formative / annual review** (3–6 CSVs, one semester or academic year): The instructor wants to understand what worked and what to improve. The report is for their own use or for an annual evaluation conference. No special framing constraints.
+**Mode A — Formative / annual review** (one semester or one academic year): The instructor wants to understand what worked and what to improve. The report is for their own use or for an annual evaluation conference.
 
-**Mode B — Promotion dossier** (~30 CSVs, 4–6 year period): The instructor wants to document teaching practices and growth over time as part of a promotion case. The report should surface longitudinal patterns — improvements made, what changed, what stayed consistent — and frame findings in terms of course content, rigor, assignments, and learning experiences, not instructor personality.
+**Mode B — Longitudinal review** (2+ years): The instructor wants to document teaching practices and growth over time for a formal review — pre-tenure review (year 2 or year 4) or promotion case. The report should surface longitudinal patterns — improvements made, what changed, what stayed consistent — and frame findings in terms of course content, rigor, assignments, and learning experiences, not instructor personality.
 
-Claude.ai allows a maximum of 20 file attachments per message. For Mode B, which typically involves 25–35 CSV files, instruct the user to put all CSVs in a zip archive and upload the zip as a single attachment. The skill's bash command handles unzipping automatically.
+Claude.ai allows a maximum of 20 file attachments per message. When the number of CSVs exceeds 20, instruct the user to put all CSVs in a zip archive and upload it as a single attachment. The skill's bash command handles unzipping automatically.
 
 The time period is inferred from the CSV files themselves — the script's term auto-detection covers this. Before running the script in Mode B, ask the user:
-1. Which courses are most central to the promotion case? (This determines how much narrative depth each course gets.)
+1. Which courses are most central to the review? (This determines how much narrative depth each course gets.)
 2. Are there any known inflection points to highlight — a course revision, a new course added to the portfolio, a change in teaching approach?
 
 These answers shape the report's narrative arc before a single line is written. If the user has no specific highlights, proceed with the default structure (course-level narratives ordered by curriculum level).
@@ -56,7 +56,7 @@ Columns (in order):
 | `Q16` | "How could the teaching of this course be improved?" | free text |
 | `Unnamed: 17` or `Unnamed: 18` | Empty trailing column | ignore |
 
-The `EnrollmentType` column is not used by the script; its presence or absence is the reliable indicator of which scale era the CSV belongs to (see Scales). The trailing unnamed column is `Unnamed: 17` in pre-Fall 2022 exports (no EnrollmentType) and `Unnamed: 18` in Fall 2022+ exports.
+The `EnrollmentType` column is not used by the script; its presence or absence is the reliable indicator of which scale era the CSV belongs to (see Scales).
 
 The Q3–Q12 wording is fixed; each column name contains the question text duplicated, like:
 `Q3_The instructor taught clearly and stressed important points._The instructor taught clearly and stressed important points.`
@@ -83,7 +83,7 @@ After normalization, Q3–Q14 means are directly comparable across all time peri
 
 ### Optional enrollment file
 
-To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines the term and SubjectID separated by a colon. Terms use the same format as the report output — "Fall 2024", "Spring 2023", etc. (capitalised season name, space, four-digit year). This must match exactly what the script auto-detects from the CSV's FilloutDate; a mismatch will cause the script to warn that the key was not found.
+To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines the term and SubjectID separated by a colon:
 
 ```json
 {
@@ -94,13 +94,12 @@ To include response rates, upload a JSON file (alongside the CSVs) mapping each 
 }
 ```
 
-Keys not present in the file are silently skipped. Partial coverage is fine — only the sections listed will have response rates computed. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
+Keys not present in the file are silently skipped. Partial coverage is fine. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 
 ### Other data notes
 
 - **`D/A`** appears as a string in any quantitative column and means *Doesn't Apply* or *Decline to Answer*. It is excluded from means in all eras. A high D/A rate (≥30% on any item) is worth noting in the report.
-- **NaN/empty** is common — a student can submit only Likert items or only narrative; this is normal and should not be treated as missing data.
-- **Don't use absolute thresholds for "good" vs. "bad" means.** Surface signal *relatively*: flag the lowest 1–2 individual items per section, and any item that sits ≥0.3 below that section's own average. That's actionable; a single number against an unmarked standard is not.
+- **Don't use absolute thresholds for "good" vs. "bad" means.** Surface signal *relatively*: flag the lowest 1–2 individual items per section, and any item that sits ≥0.3 below that section's own average.
 - **Response rate**: N shown is respondents, not enrolled students. Without an enrollment file, flag small absolute N (below ~10) as a reliability caveat.
 
 ### Term auto-detection
@@ -168,8 +167,8 @@ Keep prose tight; the instructor can ask follow-up questions for more detail.
 ```
 # Course evaluation summary — <courses>, <term(s)>
 
-<1-2 sentence framing: who taught what, scales in use, how D/A was
-handled, whether multiple sections share an instructor.>
+<1-2 sentence framing: courses covered, term, scales in use, and whether
+old-scale sections were normalized.>
 
 ## Quantitative snapshot
 
@@ -232,9 +231,9 @@ End with a single offer of a follow-up (e.g., per-section action items, full com
 
 ---
 
-#### Mode B template — Promotion dossier
+#### Mode B template — Longitudinal review
 
-The goal is a document the instructor can use as teaching evidence in a promotion case. Frame everything in terms of course content, rigor, assignments, and learning experiences — not instructor personality or interpersonal style.
+The goal is a document the instructor can use as teaching evidence in a formal review — pre-tenure or promotion. Frame everything in terms of course content, rigor, assignments, and learning experiences — not instructor personality or interpersonal style.
 
 The narrative should tell a coherent story: *this is what I teach, this is what students have said about it over time, and this is how I have responded.* Where the data shows a friction that later disappeared, or a strength that remained consistent, say so explicitly — that is the evidence.
 
@@ -242,7 +241,8 @@ The narrative should tell a coherent story: *this is what I teach, this is what 
 # Teaching evidence from student feedback — <name>, <start year>–<end year>
 
 <2–3 sentence framing: courses covered, number of sections and students,
-time period, scale conventions, how D/A was handled. Acknowledge the
+time period. Note whether old-scale sections are present and that they
+have been normalized to the current 1–4 scale. Acknowledge the
 limitations of SET data (non-teaching factors, snapshot nature) so the
 reader understands this is one source of evidence among many.>
 
@@ -288,7 +288,7 @@ for non-majors). Skip this sentence if there is no meaningful trajectory.
 
 ## Patterns across the curriculum
 
-<This section is the highest-value part of the promotion report. It
+<This section is the highest-value part of the longitudinal report. It
 synthesizes across courses and connects student feedback to teaching
 decisions. Keep it to 3–5 paragraphs.>
 
@@ -305,7 +305,7 @@ appear after [year]").
 
 **Curriculum-level patterns.** Intro courses typically rate lower than
 electives for reasons unrelated to teaching quality. Note this pattern if
-present, and contextualize it — this is important framing for a promotion
+present, and contextualize it — this is important framing for a review
 committee that might otherwise compare intro and elective scores directly.
 
 **What the data does not show.** Briefly acknowledge what SET data
@@ -329,7 +329,7 @@ With N=12–24, a 0.1 gap between sections is meaningless and a 0.3 gap is sugge
 Bolding them in the table draws the eye; the prose should explain what they mean. A section with a 4.5 instructor rating and a 3.3 on Q11 (exams reflect objectives) is telling you something specific that the overall rating averages away. Always look at the lowest 2–3 individual items per section and connect them to the qualitative comments before writing the per-course themes.
 
 **Contextualize against non-teaching factors.**
-Research consistently shows that intro and required courses rate lower than upper-division electives independent of teaching quality; larger classes tend to rate lower than small ones; and grade expectations correlate with ratings. Before attributing a gap to teaching, note structural differences that could explain it. This is especially important in Mode B, where a promotion committee might compare intro and elective scores directly.
+Research consistently shows that intro and required courses rate lower than upper-division electives independent of teaching quality; larger classes tend to rate lower than small ones; and grade expectations correlate with ratings. Before attributing a gap to teaching, note structural differences that could explain it. This is especially important in Mode B, where a review committee might compare intro and elective scores directly.
 
 **Treat response rate as a reliability weight, not a score.**
 When enrollment data is present, sections below 40% response rate are flagged in the script output. For those sections, be explicit in the report: note the rate, acknowledge that the comments may not represent the full class, and avoid presenting themes from low-response sections with the same confidence as themes from high-response ones. A section with N=8 out of 10 enrolled (80%) is very different from N=8 out of 30 enrolled (27%), even though both produce the same raw comment count. When response rates are unavailable, flag small absolute N (below ~10) as a reliability caveat instead.
@@ -386,4 +386,4 @@ The following is a *hypothetical* illustration of the target voice — not based
 
 > CS 149 course overall averages 3.9 across the review period, lower than the instructor's upper-division scores. This is consistent with the pattern research identifies for required introductory courses serving students with wide variation in prior experience — it reflects course-level structural factors rather than differences in teaching quality.
 
-Note the Mode B voice: it frames evidence in terms of assessment design and assignment structure; attributes a score change to a specific course revision; contextualizes the lower intro-course scores for a promotion committee; and stays entirely clear of language about instructor personality or style.
+Note the Mode B voice: it frames evidence in terms of assessment design and assignment structure; attributes a score change to a specific course revision; contextualizes the lower intro-course scores for a review committee; and stays entirely clear of language about instructor personality or style.
