@@ -83,7 +83,7 @@ After normalization, Q3–Q14 means are directly comparable across all time peri
 
 ### Optional enrollment file
 
-To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines the term and SubjectID separated by a colon. Terms use the same format as the report output — "Fall 2024", "Spring 2023", etc.:
+To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines the term and SubjectID separated by a colon. Terms use the same format as the report output — "Fall 2024", "Spring 2023", etc. (capitalised season name, space, four-digit year). This must match exactly what the script auto-detects from the CSV's FilloutDate; a mismatch will cause the script to warn that the key was not found.
 
 ```json
 {
