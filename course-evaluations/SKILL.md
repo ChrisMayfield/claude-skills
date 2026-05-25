@@ -152,7 +152,7 @@ fi
 ```
 
 It prints three things to stdout:
-- **Per-section means table** — one row per section with the auto-detected term, N, all Likert means rounded to 2 decimals, and overall ratings. When enrollment data is present, adds Enrolled and RR% columns and lists sections below 40% response rate. Use this in Mode A reports.
+- **Per-section means table** — one row per section with the auto-detected term, scale, N, all Likert means rounded to 2 decimals, and overall ratings. Column headers use short labels: Q3 Clarity, Q4 Prepared, Q5 Respect, Q6 Feedback, Q7 Outside, Q8 Structure, Q9 Assignments, Q10 Materials, Q11 Exams, Q12 Learned, Q13 Instructor, Q14 Course. Use these same labels in the report table. When enrollment data is present, also adds Enrolled and RR% columns and lists sections below the 40% response rate threshold. Use this table in Mode A reports.
 - **Per-course summary table** — one row per unique course (e.g., CS149), showing the term range taught (e.g., "Spring 2023 – Fall 2025"), number of sections, total N, weighted means for Q13 and Q14, and — when enrollment data is present — total enrolled and pooled response rate. Use this as the overview table in Mode B reports.
 - **Free-text comments** — all Q15 (strengths) and Q16 (improvements) responses grouped by section. When enrollment data is present, each section header includes its response rate; sections below 40% are flagged prominently.
 
@@ -213,12 +213,14 @@ sentence. Within the block, discuss where sections agree and where they
 diverge.
 
 **Strengths:** 2–3 sentences synthesizing Q15. Name specific things
-students valued.
+students valued. Always begin this paragraph with the bold label
+**Strengths:** — do not omit it or fold it into prose.
 
 **Improvements:** 2–4 sentences synthesizing Q16. Lead with items that
 repeat. Distinguish teaching from course-design issues. A short sub-list
 (3–4 items) is appropriate when improvements are highly specific and
-numerous.
+numerous. Always begin this paragraph with the bold label
+**Improvements:** — do not omit it or fold it into prose.
 
 <Repeat for each course–term group.>
 

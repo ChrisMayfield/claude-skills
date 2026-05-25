@@ -55,18 +55,18 @@ import pandas as pd
 # is_q13_q14 flags the two overall-rating items, which use a fixed 1–5 scale
 # across both survey eras and never treat "1" as No Basis to Judge.
 ITEMS = [
-    ("Q3_TaughtClearly",       "taught clearly",                False),
-    ("Q4_WellPrepared",        "well-prepared",                 False),
-    ("Q5_ConcernRespect",      "concern and respect",           False),
-    ("Q6_HelpfulFeedback",     "helpful feedback",              False),
-    ("Q7_HelpOutsideClass",    "outside of class",              False),
-    ("Q8_CourseStructure",     "structure of the course",       False),
-    ("Q9_AssignmentsValuable", "assignments were valuable",     False),
-    ("Q10_MaterialsValuable",  "course materials",              False),
-    ("Q11_ExamsReflective",    "exams and other assessments",   False),
-    ("Q12_LearnedAGreatDeal",  "learned a great deal",          False),
-    ("Q13_InstructorOverall",  "instructor overall rating",     True),
-    ("Q14_CourseOverall",      "course overall rating",         True),
+    ("Q3 Clarity",     "taught clearly",              False),
+    ("Q4 Prepared",    "well-prepared",               False),
+    ("Q5 Respect",     "concern and respect",         False),
+    ("Q6 Feedback",    "helpful feedback",            False),
+    ("Q7 Outside",     "outside of class",            False),
+    ("Q8 Structure",   "structure of the course",     False),
+    ("Q9 Assignments", "assignments were valuable",   False),
+    ("Q10 Materials",  "course materials",            False),
+    ("Q11 Exams",      "exams and other assessments", False),
+    ("Q12 Learned",    "learned a great deal",        False),
+    ("Q13 Instructor", "instructor overall rating",   True),
+    ("Q14 Course",     "course overall rating",       True),
 ]
 
 # Substrings used to locate specific columns by partial name match.
@@ -430,7 +430,7 @@ def print_course_summary_table(results: list[dict]) -> None:
     headers = ["Course", "Term range", "Scale(s)", "Sections", "Total N"]
     if has_rr:
         headers += ["Total Enrolled", "Pooled RR%"]
-    headers += ["Q13_InstructorOverall", "Q14_CourseOverall"]
+    headers += ["Q13 Instructor", "Q14 Course"]
     print("\t".join(headers))
 
     for course in sorted_courses:
@@ -477,7 +477,7 @@ def print_course_summary_table(results: list[dict]) -> None:
         if has_rr:
             row.append(str(total_enrolled) if total_enrolled is not None else "—")
             row.append(fmt_rr(pooled_rr))
-        row += [weighted_mean("Q13_InstructorOverall"), weighted_mean("Q14_CourseOverall")]
+        row += [weighted_mean("Q13 Instructor"), weighted_mean("Q14 Course")]
         print("\t".join(row))
 
 
