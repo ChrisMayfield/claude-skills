@@ -21,15 +21,42 @@ At James Madison University, student feedback surveys:
 
 These constraints apply to **both modes**. In all reports, frame findings around what the instructor *did with the course* — assignment design, assessment structure, pacing decisions, course materials — rather than around personality traits or interpersonal style. This is the right framing for formative use too: it keeps the analysis focused on things the instructor can actually change.
 
+## Getting started (user reference)
+
+*Share this section with users who ask how to use the skill or who haven't yet uploaded files.*
+
+This skill analyzes JMU course evaluation CSVs and produces an actionable written report — qualitative themes from student comments, quantitative patterns, and (for multi-year reviews) a longitudinal narrative suitable for pre-tenure or promotion review.
+
+**What to upload**
+
+Each CSV is one course section, downloaded from the JMU evaluation system. Upload all sections for the period you want analyzed. There are two modes:
+
+- **One semester or academic year** → a formative report identifying what worked and what to improve
+- **Two or more years** → a longitudinal report documenting teaching practices and growth over time, suitable for a pre-tenure (year 2 or 4) or promotion review
+
+**File limit:** Claude.ai accepts at most 20 attachments per message. If you have more than 20 CSV files, put them all in a single zip archive and upload the zip instead.
+
+**Optional: response rates**
+
+To include response rates in the report, also upload a JSON file mapping each section to its end-of-term enrollment — the "Course Audience" figure from your JMU PDF report. Key format is `"Term:SubjectID"`, where the term matches the report output exactly (e.g., `"Fall 2024"`, `"Spring 2023"`):
+
+```json
+{
+  "Fall 2024:CS149-0005": 24,
+  "Fall 2024:CS374-0002": 22,
+  "Spring 2023:CS149-0001": 30
+}
+```
+
+Partial coverage is fine — only sections listed will show response rates.
+
 ## Modes
 
-Detect the appropriate mode from context. If ambiguous, ask.
+Detect the appropriate mode from the files uploaded and any context the user provides. If ambiguous, ask.
 
 **Mode A — Formative / annual review** (one semester or one academic year): The instructor wants to understand what worked and what to improve. The report is for their own use or for an annual evaluation conference.
 
 **Mode B — Longitudinal review** (2+ years): The instructor wants to document teaching practices and growth over time for a formal review — pre-tenure review (year 2 or year 4) or promotion case. The report should surface longitudinal patterns — improvements made, what changed, what stayed consistent — and frame findings in terms of course content, rigor, assignments, and learning experiences, not instructor personality.
-
-Claude.ai allows a maximum of 20 file attachments per message. When the number of CSVs exceeds 20, instruct the user to put all CSVs in a zip archive and upload it as a single attachment. The skill's bash command handles unzipping automatically.
 
 The time period is inferred from the CSV files themselves — the script's term auto-detection covers this. Before running the script in Mode B, ask the user:
 1. Which courses are most central to the review? (This determines how much narrative depth each course gets.)
@@ -83,18 +110,7 @@ After normalization, Q3–Q14 means are directly comparable across all time peri
 
 ### Optional enrollment file
 
-To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines the term and SubjectID separated by a colon:
-
-```json
-{
-  "Spring 2023:CS149-0001": 28,
-  "Spring 2023:CS149-0002": 30,
-  "Fall 2024:CS149-0005": 25,
-  "Fall 2024:CS374-0002": 18
-}
-```
-
-Keys not present in the file are silently skipped. Partial coverage is fine. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
+If the user uploads a JSON file alongside the CSVs, pass it to the script via `--enrollment`. The key format is `"Term:SubjectID"` — e.g., `"Fall 2024:CS149-0005": 24` — where the term is the auto-detected label ("Fall 2024", "Spring 2023", etc.). Keys not found in the JSON are silently skipped. See the Getting started section for the format the user should follow.
 
 ### Other data notes
 
