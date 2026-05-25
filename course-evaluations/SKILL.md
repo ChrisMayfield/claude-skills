@@ -260,7 +260,7 @@ The goal is a document the instructor can use as teaching evidence in a formal r
 The narrative should tell a coherent story: *this is what I teach, this is what students have said about it over time, and this is how I have responded.* Where the data shows a friction that later disappeared, or a strength that remained consistent, say so explicitly — that is the evidence.
 
 ```
-# Teaching evidence from student feedback — <name>, <start year>–<end year>
+# Teaching evidence from student feedback — <start term>–<end term>
 
 <2–3 sentence framing: courses covered, number of sections and students,
 time period. Note whether old-scale sections are present and that they
