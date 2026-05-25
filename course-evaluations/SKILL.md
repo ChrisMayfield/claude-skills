@@ -23,7 +23,9 @@ These constraints apply to **both modes**. In all reports, frame findings around
 
 ## Getting started (user reference)
 
-*Share this section with users who ask how to use the skill or who haven't yet uploaded files.*
+If no CSV files are attached when this skill is invoked, present this section to the user and stop — do not attempt to run the script.
+
+---
 
 This skill analyzes JMU course evaluation CSVs and produces an actionable written report — qualitative themes from student comments, quantitative patterns, and (for multi-year reviews) a longitudinal narrative suitable for pre-tenure or promotion review.
 
@@ -123,6 +125,8 @@ If the user uploads a JSON file alongside the CSVs, pass it to the script via `-
 The script derives each section's semester from the modal `FilloutDate` timestamp. Months 1–5 are Spring, 6–8 are Summer, 9–12 are Fall. If a section's timestamps are missing or unparseable, the script labels it "Unknown term" — ask the user how to label it before writing the report.
 
 ## Workflow
+
+**Before anything else:** if no CSV files (or zip archive) are present in the uploads, present the Getting started section to the user and stop.
 
 ### 1. Read the inputs
 
