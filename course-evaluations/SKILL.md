@@ -83,17 +83,20 @@ After normalization, Q3–Q14 means are directly comparable across all time peri
 
 ### Optional enrollment file
 
-To include response rates, upload a JSON file (alongside the CSVs) mapping each SubjectID to the number of students enrolled at the end of the term — what the JMU PDF report calls "Course Audience":
+To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines a term code and SubjectID separated by a colon:
 
 ```json
 {
-  "CS149-0001": 35,
-  "CS149-0002": 32,
-  "CS345-0001": 18
+  "SP23:CS149-0001": 28,
+  "SP23:CS149-0002": 30,
+  "FA24:CS149-0005": 25,
+  "FA24:CS374-0002": 18
 }
 ```
 
-SubjectIDs not present in the file are silently skipped. Partial coverage is fine. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
+Term codes are two letters followed by two digits: `SP` = Spring, `SU` = Summer, `FA` = Fall, followed by the last two digits of the year (e.g., `SP23`, `FA24`, `SU25`). SubjectID is the course-section identifier from inside the CSV (e.g., `CS149-0005`).
+
+Keys not present in the file are silently skipped. Partial coverage is fine — only the sections listed will have response rates computed. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 
 ### Other data notes
 
@@ -154,7 +157,6 @@ While reading, hold these questions in mind:
 - **What specifics are named?** Named tools, TAs, specific assignments, particular topics, pacing locations. These are far more actionable than generic feedback.
 - **What's the experience-level mix?** Intro courses especially get split feedback because students arrive with different backgrounds. Watch for "too fast / too slow" appearing simultaneously — that's usually about student variance, not pacing.
 - **Are comments attributing things to the instructor vs. the course?** Students sometimes praise the instructor while criticizing the course design. Keep that distinction alive as you read. Note that pedagogical methodology choices (e.g., active-learning structures, group work formats) are course-design decisions and fall within the permitted framing for both modes.
-- **Is Q6 or Q7 among the lowest items?** Q6 (helpful feedback on student performance) and Q7 (effective outside class) are directly connected to feedback practices and responsiveness. When either is notably low, check comments specifically for grading timeliness, feedback quality, or office-hours availability — these are highly actionable.
 - **(Mode B only) What changed between terms?** Look for the same friction appearing in early terms and disappearing later, or new positives emerging after a likely course revision. That trajectory is the evidence.
 
 ### 3. Write the report
