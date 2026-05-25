@@ -83,18 +83,16 @@ After normalization, Q3–Q14 means are directly comparable across all time peri
 
 ### Optional enrollment file
 
-To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines a term code and SubjectID separated by a colon:
+To include response rates, upload a JSON file (alongside the CSVs) mapping each section to its enrolled student count — what the JMU PDF report calls "Course Audience". Because SubjectIDs are not unique across terms, each key combines the term and SubjectID separated by a colon. Terms use the same format as the report output — "Fall 2024", "Spring 2023", etc.:
 
 ```json
 {
-  "SP23:CS149-0001": 28,
-  "SP23:CS149-0002": 30,
-  "FA24:CS149-0005": 25,
-  "FA24:CS374-0002": 18
+  "Spring 2023:CS149-0001": 28,
+  "Spring 2023:CS149-0002": 30,
+  "Fall 2024:CS149-0005": 25,
+  "Fall 2024:CS374-0002": 18
 }
 ```
-
-Term codes are two letters followed by two digits: `SP` = Spring, `SU` = Summer, `FA` = Fall, followed by the last two digits of the year (e.g., `SP23`, `FA24`, `SU25`). SubjectID is the course-section identifier from inside the CSV (e.g., `CS149-0005`).
 
 Keys not present in the file are silently skipped. Partial coverage is fine — only the sections listed will have response rates computed. When the file is present, both summary tables gain Enrolled and RR% columns, and each section's comment block is headed with its response rate. Sections below 40% are flagged with `!` in the tables and `*** LOW RESPONSE RATE ***` in the comment header.
 

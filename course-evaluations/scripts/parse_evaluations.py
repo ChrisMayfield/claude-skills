@@ -8,12 +8,12 @@ Usage:
     python parse_evaluations.py /mnt/user-data/uploads/*.csv
     python parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment enrollment.json
 
-The optional --enrollment file is a JSON object mapping "TERMCODE:SubjectID"
+The optional --enrollment file is a JSON object mapping "TERM:SubjectID"
 to the number of students enrolled at end of term ("Course Audience" in the
-JMU PDF report). SubjectIDs are not unique across terms, so the term code is
-required. Term codes are two letters + two digits: SP, SU, or FA followed by
-the last two digits of the year (e.g., SP23, FA24, SU25). Example:
-    {"FA24:CS149-0005": 25, "FA24:CS149-0006": 28, "SP23:CS149-0001": 30}
+JMU PDF report). SubjectIDs are not unique across terms, so the term is
+required. Terms use the same format as the report: "Fall 2024", "Spring 2023",
+etc. Example:
+    {"Fall 2024:CS149-0005": 25, "Fall 2024:CS149-0006": 28, "Spring 2023:CS149-0001": 30}
 
 When provided, response rate (respondents / enrolled) is added to both
 summary tables and section comment headers. Sections below 40% response
@@ -182,20 +182,6 @@ def term_sort_key(term: str) -> tuple:
     return (9999, 9)
 
 
-SEASON_TO_CODE = {"Spring": "SP", "Summer": "SU", "Fall": "FA"}
-
-
-def term_to_code(term: str) -> str | None:
-    """Convert a term label to a two-letter + two-digit code, e.g. 'Fall 2024' → 'FA24'.
-
-    Returns None if the term label is not parseable (e.g. 'Unknown term').
-    """
-    parts = term.split()
-    if len(parts) == 2 and parts[0] in SEASON_TO_CODE and parts[1].isdigit():
-        return f"{SEASON_TO_CODE[parts[0]]}{parts[1][-2:]}"
-    return None
-
-
 def course_key(section_id: str) -> str:
     """Strip the section number from a section ID to get the course identifier.
 
@@ -243,19 +229,18 @@ def analyze_file(path: Path, enrollment: dict[str, int] | None = None) -> dict:
 
     enrolled = None
     if enrollment is not None:
-        # Build the composite key: e.g. "FA24:CS149-0005".
-        # term_to_code returns None if the term is unparseable, in which case
-        # we skip the lookup and warn rather than silently returning no data.
-        code = term_to_code(term)
-        if code is None:
-            print(f"  [warn] {section_id}: term '{term}' could not be converted "
-                  f"to a term code; enrollment lookup skipped", file=sys.stderr)
+        # Key format: "Fall 2024:CS149-0005" — term label as auto-detected,
+        # colon separator, then SubjectID. SubjectIDs repeat across terms so
+        # the term prefix is required to uniquely identify a section.
+        if term == "Unknown term":
+            print(f"  [warn] {section_id}: term could not be detected; "
+                  f"enrollment lookup skipped", file=sys.stderr)
         else:
-            enroll_key = f"{code}:{section_id}"
+            enroll_key = f"{term}:{section_id}"
             if enroll_key in enrollment:
                 enrolled = enrollment[enroll_key]
             else:
-                print(f"  [warn] {enroll_key}: not found in enrollment file; "
+                print(f"  [warn] '{enroll_key}' not found in enrollment file; "
                       f"response rate unavailable", file=sys.stderr)
 
     if enrolled is not None and enrolled > 0:
