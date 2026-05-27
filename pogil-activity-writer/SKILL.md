@@ -171,11 +171,16 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with an italic *Sample:* label. This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label. Between numbered list items, insert an indented `&nbsp;` on its own line to add a little vertical breathing room — this makes scanning much easier when an author is reviewing question-and-answer together. This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
-   > *Sample:* About 1.15×. Rate goes from 33.3 to 38.5 — barely any change despite the big jump in [S].
+   > ***Sample:*** About 1.15×. Rate goes from 33.3 to 38.5 — barely any change despite the big jump in [S].
+
+   &nbsp;
+
+4. The next question goes here.
+   > ***Sample:*** Its answer goes here.
 ```
 
 Inline placement matters: it lets the author (and any reviewer) read each question and its expected answer together, which is the fastest way to catch a question that is unclear, too hard, or misaimed. A traditional answer key in a separate section forces the reader to flip back and forth and loses this benefit.
@@ -183,9 +188,11 @@ Inline placement matters: it lets the author (and any reviewer) read each questi
 Student-team answers:
 - Are sometimes incomplete or use informal language.
 - May contain a common error or two that the instructor can address through facilitation.
-- For divergent questions, may include several valid responses or note "variation expected."
+- For divergent questions, may include several valid responses or note "(variation expected)."
 
 Sample answers appear inline for the main activity questions, the exercises, and the problems. **Facilitation notes** (what to watch for, common misconceptions, probing questions, suggested timing) still live in a separate Facilitation Notes section at the end of the document — those are about *running* the activity, not about the answers themselves.
+
+**A note on what this output is for.** The Markdown produced by this skill is the **authoring/review version** — sample answers inline, vertical breathing room for scanning. Converting to a student-facing handout (removing the sample answers, adding space for handwritten or typed responses, paginating for print or for an LMS) is a separate downstream step the author handles once the content is solid. Don't try to optimize the skill's output for student distribution; the priority is making the activity easy for the instructor to read, review, and revise.
 
 ### Step 10 — Review and refine
 
@@ -206,15 +213,19 @@ Offer to revise any section based on the review.
 
 After all sections are drafted, write a single Markdown file using the template below. Save it to `/mnt/user-data/outputs/<topic-slug>-pogil-activity.md` (replace `<topic-slug>` with a short kebab-case version of the topic) and call `present_files` so the user can download it.
 
-Two formatting conventions for the output:
+This output is the **authoring/review version**: optimized for the instructor to read, review, and revise. Sample answers are inline; vertical spacing is generous. Converting to a student-facing handout (removing answers, adding space for student responses) is a separate downstream step the author handles afterward — not part of this skill's job.
+
+Three formatting conventions for the output:
 
 1. **No question-category headings.** Under each model is a single numbered list of questions. Do not insert `### Exploration` / `### Concept invention` / `### Application` subheadings. The three categories live in the author's head; they do not appear in the document.
-2. **Sample answers inline.** Every question is followed immediately by its sample answer, formatted as a blockquote with an italic *Sample:* label:
+2. **Sample answers inline, bold-italic label.** Every question is followed immediately by its sample answer, formatted as a blockquote with a ***Sample:*** label (bold + italic):
 
    ```
    3. Question text here?
-      > *Sample:* Student-team-voice answer here.
+      > ***Sample:*** Student-team-voice answer here.
    ```
+
+3. **Vertical breathing room between numbered items.** Between numbered list items (after the answer, before the next number), insert an indented `&nbsp;` on its own line. This adds about one blank line of vertical space, which makes scanning much easier when reviewing question-and-answer pairs.
 
 Here is the template:
 
@@ -245,19 +256,27 @@ and what's coming. Optional — instructors often provide this aloud at the star
 [The model itself — table, diagram description, text, code, etc.]
 
 1. [First question — typically a short directed question that orients the team to the model]
-   > *Sample:* [Student-team-voice answer.]
+   > ***Sample:*** [Student-team-voice answer.]
+
+   &nbsp;
 
 2. [Next question — could be another orienting question, or could be an inference depending on what the sequence needs]
-   > *Sample:* [Answer.]
+   > ***Sample:*** [Answer.]
+
+   &nbsp;
 
 3. [Continue sequencing — let the questions follow the natural arc from observation toward the concept, weaving in further orienting questions if a team needs to look at a specific feature mid-sequence]
-   > *Sample:* [Answer.]
+   > ***Sample:*** [Answer.]
+
+   &nbsp;
 
 4. [The key question — often phrased as "in your own words, describe…" or "complete this statement…". This is where new terminology gets introduced or articulated.]
-   > *Sample:* [Answer; for open phrasing, note "(variation expected)" and give one plausible version.]
+   > ***Sample:*** [Answer; for open phrasing, note "(variation expected)" and give one plausible version.]
+
+   &nbsp;
 
 5. [Application question — apply the just-developed concept to a fresh case.]
-   > *Sample:* [Answer with the justification students should give.]
+   > ***Sample:*** [Answer with the justification students should give.]
 
 ---
 
@@ -269,19 +288,21 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
 ## Exercises
 
-[2+ per content objective. Variations on the application questions for practice after class. Use the same inline-answer format.]
+[2+ per content objective. Variations on the application questions for practice after class. Use the same inline-answer format with `&nbsp;` separators between items.]
 
 1. [Exercise]
-   > *Sample:* [Answer.]
+   > ***Sample:*** [Answer.]
+
+   &nbsp;
 
 2. [Exercise]
-   > *Sample:* [Answer.]
+   > ***Sample:*** [Answer.]
 
 ## Problem (optional)
 
 [A higher-order problem distinct from exercises — student doesn't immediately know what to do, may integrate multiple concepts, may sit in a real-world context.]
 
-> *Sample:* [Answer, possibly with multiple acceptable approaches noted.]
+> ***Sample:*** [Answer, possibly with multiple acceptable approaches noted.]
 
 ---
 
