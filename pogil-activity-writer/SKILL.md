@@ -1,6 +1,6 @@
 ---
 name: pogil-activity-writer
-description: Collaboratively author Process Oriented Guided Inquiry Learning (POGIL) classroom activities — structured worksheets that guide student teams through a model, exploration questions, concept invention, and application. Use this skill whenever the user asks to create, draft, write, or develop a POGIL activity, guided inquiry worksheet, learning cycle activity, or any classroom activity following the POGIL methodology — even if they don't explicitly say "POGIL." Trigger on requests like "write a POGIL on photosynthesis," "I need a guided inquiry worksheet for my chem class," "make a learning cycle activity for [topic]," "help me design an inquiry-based lesson on X," or "I'm writing classroom materials for student teams to work through." The skill walks the user through backward design (objectives → application → key question → model → exploration questions → sample answers) and produces a Markdown file with both the student activity and teacher materials.
+description: Collaboratively author Process Oriented Guided Inquiry Learning (POGIL) classroom activities — structured worksheets that guide student teams through a model, questions, and application. Use this skill whenever the user asks to create or draft a POGIL activity, guided inquiry worksheet, learning cycle activity, or any classroom activity following the POGIL methodology — even if they don't explicitly say "POGIL." Trigger on requests like "write a POGIL activity on photosynthesis," "I need a guided inquiry worksheet for my chem class," "make a learning cycle activity on [topic]," or "help me design an inquiry-based lesson on X." Users sometimes say "write a POGIL" as shorthand — recognize the request, but in your own writing always say "POGIL activity," since POGIL is the pedagogy and the activity is the artifact. The skill walks the user through backward design and produces two Markdown files — a teacher version with inline sample answers and facilitation notes, and a student version with writing space.
 ---
 
 # POGIL Activity Writer
@@ -25,7 +25,7 @@ A typical 45–50 minute activity contains 2–3 **Learning Cycles**. Each Learn
 
 POGIL activities are written by **backward design** — start from what students should be able to do at the end, and work backward to the model. When invoked, walk the user through the workflow below conversationally. Don't try to one-shot the whole activity from a one-line prompt. Each step is a small conversation: propose, get feedback, refine, then move on.
 
-If the user's initial request is vague ("help me write a POGIL"), start with Step 0. If they've given a clear topic and audience ("write a POGIL on Newton's third law for intro physics"), still walk through the steps but move briskly through ones where the answer is obvious from context. Skipping the elicitation step entirely produces generic activities that don't fit any real classroom — the conversation is the point.
+If the user's initial request is vague ("help me write a POGIL activity"), start with Step 0. If they've given a clear topic and audience ("write a POGIL activity on Newton's third law for intro physics"), still walk through the steps but move briskly through ones where the answer is obvious from context. Skipping the elicitation step entirely produces generic activities that don't fit any real classroom — the conversation is the point.
 
 A note on pace: the user is an instructor with real expertise in their subject. Treat them as a content expert and yourself as the structural expert. Propose objectives, models, and questions; let them correct your subject-matter assumptions and push back on questions that are too easy, too hard, or wrong for their students.
 
@@ -186,9 +186,9 @@ For every question in the activity, write a sample answer **from the perspective
 Inline placement matters: it lets the author (and any reviewer) read each question and its expected answer together, which is the fastest way to catch a question that is unclear, too hard, or misaimed. A traditional answer key in a separate section forces the reader to flip back and forth and loses this benefit.
 
 Student-team answers:
-- Are sometimes incomplete or use informal language.
-- May contain a common error or two that the instructor can address through facilitation.
-- For divergent questions, may include several valid responses or note "(variation expected)."
+- **Must be correct.** Sample answers often end up distributed to students as answer keys, so accuracy matters directly. They also matter during review: if a sample answer is wrong, the author reviewing the activity will think the *question* is broken when it isn't. Never write a deliberately wrong answer to model a misconception. Misconceptions belong in the Facilitation Notes section at the end of the document, where they are labeled as such and accompanied by probing questions for the instructor to ask.
+- May use informal or incomplete phrasing — the goal is to show a credible student-team articulation, not an expert's polished version. "Rate stops going up" is a fine team answer; "rate asymptotically approaches Vmax" is not.
+- For divergent questions, include "(variation expected)" before the sample and give one plausible correct version. If multiple substantively different correct answers exist, list them.
 
 Sample answers appear inline for the main activity questions, the exercises, and the problems. **Facilitation notes** (what to watch for, common misconceptions, probing questions, suggested timing) still live in a separate Facilitation Notes section at the end of the document — those are about *running* the activity, not about the answers themselves.
 
@@ -209,13 +209,29 @@ Walk through this checklist with the user before finalizing:
 
 Offer to revise any section based on the review.
 
+### Step 11 — Generate the student version
+
+Once the user has accepted the activity, produce the **student-facing** version alongside the teacher version. They differ in only two ways:
+
+1. Every `> ***Sample:*** ...` line is removed and replaced with vertical writing space (3–4 standalone `&nbsp;` lines at the same indent as the question's content). This gives roughly 3–4 lines of room for students to write answers when the file is printed or pasted into a Google Doc / LMS.
+2. The entire `# Facilitation Notes` section at the bottom is dropped.
+
+Everything else — title, Why?, Prerequisites, Learning Objectives, Models, question text, Exercises, Problem, and the `&nbsp;` separators between numbered items — stays exactly the same. The student version is what an instructor would print or post for class use; the teacher version is for the instructor's own reference and review.
+
+Produce both files in the same step (no need to ask the user before generating the student version — they have already accepted the activity). See the next section for filenames and output format.
+
 ## Output format
 
-After all sections are drafted, write a single Markdown file using the template below. Save it to `/mnt/user-data/outputs/<topic-slug>-pogil-activity.md` (replace `<topic-slug>` with a short kebab-case version of the topic) and call `present_files` so the user can download it.
+After all sections are drafted and the user has accepted the activity, write **two** Markdown files:
 
-This output is the **authoring/review version**: optimized for the instructor to read, review, and revise. Sample answers are inline; vertical spacing is generous. Converting to a student-facing handout (removing answers, adding space for student responses) is a separate downstream step the author handles afterward — not part of this skill's job.
+- `/mnt/user-data/outputs/<topic-slug>_Teacher.md` — the authoring/review version with sample answers inline and facilitation notes at the end.
+- `/mnt/user-data/outputs/<topic-slug>_Student.md` — the student-facing version with writing space in place of answers and no facilitation notes.
 
-Three formatting conventions for the output:
+`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix `Teacher` or `Student`. Call `present_files` with both filepaths, teacher version first.
+
+The Teacher version is the authoring/review version, optimized for the instructor to read, review, and revise. Sample answers are inline; vertical spacing is generous. The Student version strips the answers and adds writing space.
+
+Four formatting conventions for the Teacher version:
 
 1. **No question-category headings.** Under each model is a single numbered list of questions. Do not insert `### Exploration` / `### Concept invention` / `### Application` subheadings. The three categories live in the author's head; they do not appear in the document.
 2. **Sample answers inline, bold-italic label.** Every question is followed immediately by its sample answer, formatted as a blockquote with a ***Sample:*** label (bold + italic):
@@ -226,8 +242,11 @@ Three formatting conventions for the output:
    ```
 
 3. **Vertical breathing room between every numbered item.** Between numbered list items — including sub-items (e.g., `a.`, `b.`, `c.` under question 13) — insert an indented `&nbsp;` on its own line. Indent it to match the content of the item it follows (3 spaces under a top-level `1.`; 7 spaces under a sub-item like `    a.`). This adds about one blank line of vertical space, which makes scanning much easier when reviewing question-and-answer pairs.
+4. **No `---` horizontal rules between sections.** Use a standalone `&nbsp;` line instead. VS Code and GitHub already render a horizontal rule visually after level-1 and level-2 headings, so an explicit `---` produces a doubled rule that hurts readability. The `&nbsp;` just inserts a blank line of breathing room.
 
-Here is the template:
+The Student version follows the same four conventions, with two transformations applied: each `> ***Sample:*** ...` line is replaced by 3–4 standalone indented `&nbsp;` lines (providing writing space), and the entire `# Facilitation Notes` section is dropped.
+
+Here is the Teacher template:
 
 ```markdown
 # [Activity Title]
@@ -249,7 +268,7 @@ and what's coming. Optional — instructors often provide this aloud at the star
 **Process skills:**
 - [Process skill goal 1 with category in parentheses]
 
----
+&nbsp;
 
 ## Model 1: [Descriptive title]
 
@@ -278,13 +297,13 @@ and what's coming. Optional — instructors often provide this aloud at the star
 5. [Application question — apply the just-developed concept to a fresh case.]
    > ***Sample:*** [Answer with the justification students should give.]
 
----
+&nbsp;
 
 ## Model 2: [Descriptive title]
 
 [Repeat the inline-answer structure for each learning cycle. Typically 2–3 cycles total per 45–50 minute class.]
 
----
+&nbsp;
 
 ## Exercises
 
@@ -304,7 +323,7 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
 > ***Sample:*** [Answer, possibly with multiple acceptable approaches noted.]
 
----
+&nbsp;
 
 # Facilitation Notes
 
@@ -328,13 +347,13 @@ and what's coming. Optional — instructors often provide this aloud at the star
 - [A stretch question or extension that prepares for the next class]
 ```
 
-After saving, briefly summarize what's in the file and offer to revise any section.
+After saving both files, briefly summarize what's in the Teacher version and note that the Student version is the same content with answers removed and writing space added. Offer to revise any section.
 
 ## A few important nuances
 
-**Don't introduce terminology before students invent it.** If the activity teaches "valence electron," that phrase shouldn't appear in the model or in exploration questions — only in or after the key question. This is the single most common mistake in POGIL drafts. The model should contain *evidence* for the concept, presented in everyday or pre-existing terminology; the new term is the thing the students are about to coin.
+**Don't introduce terminology before students invent it.** If the activity teaches "valence electron," that phrase shouldn't appear in the model or in exploration questions — only in or after the key question. This is the single most common mistake in drafts of POGIL activities. The model should contain *evidence* for the concept, presented in everyday or pre-existing terminology; the new term is the thing the students are about to coin.
 
-**Models need contrast.** "Here is one example of an exothermic reaction" is not a POGIL model. "Here are five reactions, three of which release energy and two of which absorb it, with the energy values" is, because the student can see the pattern. When choosing examples for a model, ask: what would change if the concept were false? Make sure the model contains cases that distinguish.
+**Models need contrast.** "Here is one example of an exothermic reaction" is not a sufficient model for a POGIL activity. "Here are five reactions, three of which release energy and two of which absorb it, with the energy values" is, because the student can see the pattern. When choosing examples for a model, ask: what would change if the concept were false? Make sure the model contains cases that distinguish.
 
 **Questions should be a sequence, not a list.** Each question should rest on the answers to the previous ones, building toward the key question. If you could shuffle the questions and they'd still work, the sequence isn't doing enough work.
 
