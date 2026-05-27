@@ -171,7 +171,7 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label. Between numbered list items, insert an indented `&nbsp;` on its own line to add a little vertical breathing room — this makes scanning much easier when an author is reviewing question-and-answer together. This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label. Between numbered list items — **including sub-items** like 13a, 13b, 13c — insert an indented `&nbsp;` on its own line to add a little vertical breathing room. Indent the `&nbsp;` to match the content of the item it follows (3 spaces for a top-level `1.` item; 7 spaces for a sub-item like `    a.`). This makes scanning much easier when an author is reviewing question-and-answer together. This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
@@ -225,7 +225,7 @@ Three formatting conventions for the output:
       > ***Sample:*** Student-team-voice answer here.
    ```
 
-3. **Vertical breathing room between numbered items.** Between numbered list items (after the answer, before the next number), insert an indented `&nbsp;` on its own line. This adds about one blank line of vertical space, which makes scanning much easier when reviewing question-and-answer pairs.
+3. **Vertical breathing room between every numbered item.** Between numbered list items — including sub-items (e.g., `a.`, `b.`, `c.` under question 13) — insert an indented `&nbsp;` on its own line. Indent it to match the content of the item it follows (3 spaces under a top-level `1.`; 7 spaces under a sub-item like `    a.`). This adds about one blank line of vertical space, which makes scanning much easier when reviewing question-and-answer pairs.
 
 Here is the template:
 
