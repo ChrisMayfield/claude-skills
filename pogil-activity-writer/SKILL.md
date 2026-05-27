@@ -149,7 +149,7 @@ A common failure mode is asking students to just restate something they can read
 
 ### Step 8 — Exploration questions
 
-These are the *first* questions students see after the model — short, directed, easy to answer by reading the model or applying prior knowledge. They orient the team to the model and surface the key features they'll need later.
+These are the early questions in the sequence — short, directed, easy to answer by reading the model or applying prior knowledge. They orient the team to the model and surface the key features they'll need later.
 
 Examples:
 - "In Model 1, what units are used for energy?"
@@ -158,25 +158,44 @@ Examples:
 
 Aim for 2–4 exploration questions per model. They should be answerable in under a minute each. Roughly 3–10 total questions per model is a healthy range across exploration + invention + application.
 
-### Step 9 — Sample answers (teacher materials)
+### A critical point about Exploration / Invention / Application
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Student-team answers:
+These three categories are **a design frame for the author, not document structure for the student.** Do **not** label question groups as "Exploration" / "Concept Invention" / "Application" in the activity itself. The student sees a single numbered list of questions under each model.
 
+Two reasons this matters:
+
+1. Labels signal too much to the student about each question's role. The whole pedagogical move is that a student answers a directed question, then a comparing question, then a key question — and the realization that "we just discovered something" emerges from doing the work, not from a header announcing it.
+2. Real activities don't follow strict E → CI → A order. A team may need an exploration-style question (a quick lookup from the model) in the *middle* of the invention sequence — e.g., after attempting an inference, you might point them to another row of the table they hadn't noticed. The author thinks in the three categories; the question sequence weaves them.
+
+So as you draft, think of Steps 6–8 as design *checks* — does my sequence include enough orienting questions early, build inferential momentum, and end with a clear key + application? — not as document sections to write separately.
+
+### Step 9 — Sample answers (inline)
+
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with an italic *Sample:* label. This is the format:
+
+```markdown
+3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
+   > *Sample:* About 1.15×. Rate goes from 33.3 to 38.5 — barely any change despite the big jump in [S].
+```
+
+Inline placement matters: it lets the author (and any reviewer) read each question and its expected answer together, which is the fastest way to catch a question that is unclear, too hard, or misaimed. A traditional answer key in a separate section forces the reader to flip back and forth and loses this benefit.
+
+Student-team answers:
 - Are sometimes incomplete or use informal language.
 - May contain a common error or two that the instructor can address through facilitation.
-- For divergent questions, may include several valid responses.
+- For divergent questions, may include several valid responses or note "variation expected."
 
-Also write brief **facilitation notes** for each model — common misconceptions to watch for, probing questions to ask teams that are stuck, and how long teams should be spending on each section.
+Sample answers appear inline for the main activity questions, the exercises, and the problems. **Facilitation notes** (what to watch for, common misconceptions, probing questions, suggested timing) still live in a separate Facilitation Notes section at the end of the document — those are about *running* the activity, not about the answers themselves.
 
 ### Step 10 — Review and refine
 
 Walk through this checklist with the user before finalizing:
 
-- Does each learning cycle have all three phases (Exploration → Concept Invention → Application)?
-- Are concepts introduced *only after* students invent them (not pre-named in the model)?
-- Is the model rich enough to support the inference it asks for? (Single examples rarely work.)
-- Are exploration questions short and directed?
-- Are invention questions truly inferential (not just observational)?
+- Does each learning cycle's question sequence cover all three phases (orient to the model → drive inference → apply the new concept)? Note: these are design phases the author checks for, **not** headings in the document.
+- Are concepts introduced *only after* students invent them (not pre-named in the model or in early questions)?
+- Is the model rich enough to support the inference it asks for? Does it vary along the dimension the concept hinges on, with enough cases to make a pattern visible? (Single examples rarely work.)
+- Are the early, orienting questions short and directed?
+- Are the inferential questions truly inferential — requiring students to compare, predict, or explain — not just observational?
 - Is at least one process skill developed by the *structure* of the questions, not just by facilitation?
 - Can a team of 3–4 students plausibly finish the in-class questions in the allotted time?
 - Are there 2+ exercises per content objective for practice after class?
@@ -186,6 +205,18 @@ Offer to revise any section based on the review.
 ## Output format
 
 After all sections are drafted, write a single Markdown file using the template below. Save it to `/mnt/user-data/outputs/<topic-slug>-pogil-activity.md` (replace `<topic-slug>` with a short kebab-case version of the topic) and call `present_files` so the user can download it.
+
+Two formatting conventions for the output:
+
+1. **No question-category headings.** Under each model is a single numbered list of questions. Do not insert `### Exploration` / `### Concept invention` / `### Application` subheadings. The three categories live in the author's head; they do not appear in the document.
+2. **Sample answers inline.** Every question is followed immediately by its sample answer, formatted as a blockquote with an italic *Sample:* label:
+
+   ```
+   3. Question text here?
+      > *Sample:* Student-team-voice answer here.
+   ```
+
+Here is the template:
 
 ```markdown
 # [Activity Title]
@@ -213,58 +244,67 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
 [The model itself — table, diagram description, text, code, etc.]
 
-### Exploration
-1. [Short directed question]
-2. [Short directed question]
+1. [First question — typically a short directed question that orients the team to the model]
+   > *Sample:* [Student-team-voice answer.]
 
-### Concept invention
-3. [Inferential question]
-4. [Inferential question building on #3]
-5. **Key question:** [Articulate the concept in your own words]
+2. [Next question — could be another orienting question, or could be an inference depending on what the sequence needs]
+   > *Sample:* [Answer.]
 
-### Application
-6. [Apply the concept to a new case]
+3. [Continue sequencing — let the questions follow the natural arc from observation toward the concept, weaving in further orienting questions if a team needs to look at a specific feature mid-sequence]
+   > *Sample:* [Answer.]
+
+4. [The key question — often phrased as "in your own words, describe…" or "complete this statement…". This is where new terminology gets introduced or articulated.]
+   > *Sample:* [Answer; for open phrasing, note "(variation expected)" and give one plausible version.]
+
+5. [Application question — apply the just-developed concept to a fresh case.]
+   > *Sample:* [Answer with the justification students should give.]
 
 ---
 
 ## Model 2: [Descriptive title]
 
-[Repeat structure for each learning cycle. Typically 2–3 cycles total.]
+[Repeat the inline-answer structure for each learning cycle. Typically 2–3 cycles total per 45–50 minute class.]
 
 ---
 
 ## Exercises
-[2–10 per content objective. Variations on application questions for practice after class.]
 
-1. ...
-2. ...
+[2+ per content objective. Variations on the application questions for practice after class. Use the same inline-answer format.]
 
-## Problems (optional)
-[Higher-order problems that integrate concepts or apply them in a new real-world context.
-Distinct from exercises in that the student doesn't immediately know what to do.]
+1. [Exercise]
+   > *Sample:* [Answer.]
+
+2. [Exercise]
+   > *Sample:* [Answer.]
+
+## Problem (optional)
+
+[A higher-order problem distinct from exercises — student doesn't immediately know what to do, may integrate multiple concepts, may sit in a real-world context.]
+
+> *Sample:* [Answer, possibly with multiple acceptable approaches noted.]
 
 ---
 
-# Teacher Materials
+# Facilitation Notes
 
-## Facilitation overview
-- Suggested time: [breakdown by model]
-- Suggested team roles: [Manager, Recorder, Presenter, Reflector — or context-specific]
-- What to watch for: [high-level summary]
+## Overview
+- **Suggested time:** [breakdown by model]
+- **Suggested team roles:** [Manager, Recorder, Presenter, Reflector — or context-specific]
+- **What to watch for at the classroom level:** [high-level summary]
 
-## Sample answers
+## Per-model notes
 
 ### Model 1
-1. [Student-perspective answer]
-2. [Student-perspective answer]
-...
-
-### Facilitation notes for Model 1
 - [What teams might get stuck on]
-- [Common misconceptions]
+- [Common misconceptions to address]
 - [Probing questions for stuck teams]
+- [Timing target for this model]
 
-[Repeat per model.]
+### Model 2
+- [Same structure]
+
+## If a team finishes early
+- [A stretch question or extension that prepares for the next class]
 ```
 
 After saving, briefly summarize what's in the file and offer to revise any section.
