@@ -171,7 +171,7 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label. Between numbered list items — **including sub-items** like 13a, 13b, 13c — insert an indented `&nbsp;` on its own line to add a little vertical breathing room. Indent the `&nbsp;` to match the content of the item it follows (3 spaces for a top-level `1.` item; 7 spaces for a sub-item like `    a.`). This makes scanning much easier when an author is reviewing question-and-answer together. This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label. After every question (including the last question in a model and the last exercise before the Problem) insert an indented `&nbsp;` on its own line as trailing breathing room — the spacing belongs to the question, so its indent matches the question's content (3 spaces under a top-level `1.`; 7 spaces under a sub-item like `    a.`). This makes scanning much easier when an author is reviewing question-and-answer together. This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
@@ -211,27 +211,38 @@ Offer to revise any section based on the review.
 
 ### Step 11 — Generate the student version
 
-Once the user has accepted the activity, produce the **student-facing** version alongside the teacher version. They differ in only two ways:
+Once the user has accepted the activity, run the bundled script to produce the student-facing version:
 
-1. Every `> ***Sample:*** ...` line is removed and replaced with vertical writing space (3–4 standalone `&nbsp;` lines at the same indent as the question's content). This gives roughly 3–4 lines of room for students to write answers when the file is printed or pasted into a Google Doc / LMS.
-2. The entire `# Facilitation Notes` section at the bottom is dropped.
+```bash
+python scripts/generate_student_version.py /mnt/user-data/outputs/<topic-slug>_Teacher.md
+```
 
-Everything else — title, Why?, Prerequisites, Learning Objectives, Models, question text, Exercises, Problem, and the `&nbsp;` separators between numbered items — stays exactly the same. The student version is what an instructor would print or post for class use; the teacher version is for the instructor's own reference and review.
+(Invoke the script with the path to the Teacher file. The script writes the Student file alongside it in the same directory, with `_Teacher.md` replaced by `_Student.md` in the filename.)
 
-Produce both files in the same step (no need to ask the user before generating the student version — they have already accepted the activity). See the next section for filenames and output format.
+The script performs three deterministic transformations:
+
+1. Drops the entire `# Facilitation Notes` section.
+2. Replaces every `> ***Sample:*** ...` line with vertical writing space — a series of indented `&nbsp;` lines, **proportional to the sample answer's length** (roughly one writing line per ~70 characters of sample, with a floor of 2 lines and a ceiling of 8 lines). Longer answers get more room to write.
+3. Removes the redundant `&nbsp;` separator that originally followed each sample answer (since the writing space now serves that role).
+
+Everything else — title, Why?, Prerequisites, Learning Objectives, Models, question text, Exercises, Problem, table contents, code snippets, and the `&nbsp;` separators between non-question sections — is preserved verbatim.
+
+Do not try to produce the Student file yourself by paraphrasing or rewriting the Teacher file. Always invoke the script. It is deterministic, fast, and ensures the two files stay in sync.
+
+After the script runs, call `present_files` with both filepaths, Teacher version first.
 
 ## Output format
 
-After all sections are drafted and the user has accepted the activity, write **two** Markdown files:
+After all sections are drafted and the user has accepted the activity, write the Teacher file and run the script to produce the Student file. Two Markdown files end up in `/mnt/user-data/outputs/`:
 
-- `/mnt/user-data/outputs/<topic-slug>_Teacher.md` — the authoring/review version with sample answers inline and facilitation notes at the end.
-- `/mnt/user-data/outputs/<topic-slug>_Student.md` — the student-facing version with writing space in place of answers and no facilitation notes.
+- `<topic-slug>_Teacher.md` — the authoring/review version with sample answers inline and facilitation notes at the end. **Written by Claude.**
+- `<topic-slug>_Student.md` — the student-facing version with proportional writing space in place of answers and no facilitation notes. **Generated by the bundled script** from the Teacher file.
 
-`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix `Teacher` or `Student`. Call `present_files` with both filepaths, teacher version first.
+`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix `Teacher` or `Student`. Call `present_files` with both filepaths, Teacher first.
 
-The Teacher version is the authoring/review version, optimized for the instructor to read, review, and revise. Sample answers are inline; vertical spacing is generous. The Student version strips the answers and adds writing space.
+The Teacher version is the authoring/review version, optimized for the instructor to read, review, and revise. Sample answers are inline; vertical spacing is generous.
 
-Four formatting conventions for the Teacher version:
+Four formatting conventions for the Teacher version (the script handles the Student version automatically):
 
 1. **No question-category headings.** Under each model is a single numbered list of questions. Do not insert `### Exploration` / `### Concept invention` / `### Application` subheadings. The three categories live in the author's head; they do not appear in the document.
 2. **Sample answers inline, bold-italic label.** Every question is followed immediately by its sample answer, formatted as a blockquote with a ***Sample:*** label (bold + italic):
@@ -241,10 +252,8 @@ Four formatting conventions for the Teacher version:
       > ***Sample:*** Student-team-voice answer here.
    ```
 
-3. **Vertical breathing room between every numbered item.** Between numbered list items — including sub-items (e.g., `a.`, `b.`, `c.` under question 13) — insert an indented `&nbsp;` on its own line. Indent it to match the content of the item it follows (3 spaces under a top-level `1.`; 7 spaces under a sub-item like `    a.`). This adds about one blank line of vertical space, which makes scanning much easier when reviewing question-and-answer pairs.
+3. **Vertical breathing room after every question.** The `&nbsp;` separator belongs to the question above it (it is the question's trailing breathing room), not to the gap between questions. Indent it to match the indentation of the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This rule applies to **every** numbered item, including the last question of each model (before the next `## Model` heading) and the last exercise (before `## Problem`).
 4. **No `---` horizontal rules between sections.** Use a standalone `&nbsp;` line instead. VS Code and GitHub already render a horizontal rule visually after level-1 and level-2 headings, so an explicit `---` produces a doubled rule that hurts readability. The `&nbsp;` just inserts a blank line of breathing room.
-
-The Student version follows the same four conventions, with two transformations applied: each `> ***Sample:*** ...` line is replaced by 3–4 standalone indented `&nbsp;` lines (providing writing space), and the entire `# Facilitation Notes` section is dropped.
 
 Here is the Teacher template:
 
@@ -297,13 +306,13 @@ and what's coming. Optional — instructors often provide this aloud at the star
 5. [Application question — apply the just-developed concept to a fresh case.]
    > ***Sample:*** [Answer with the justification students should give.]
 
-&nbsp;
+   &nbsp;
 
 ## Model 2: [Descriptive title]
 
 [Repeat the inline-answer structure for each learning cycle. Typically 2–3 cycles total per 45–50 minute class.]
 
-&nbsp;
+   &nbsp;
 
 ## Exercises
 
@@ -316,6 +325,8 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
 2. [Exercise]
    > ***Sample:*** [Answer.]
+
+   &nbsp;
 
 ## Problem (optional)
 
@@ -347,7 +358,7 @@ and what's coming. Optional — instructors often provide this aloud at the star
 - [A stretch question or extension that prepares for the next class]
 ```
 
-After saving both files, briefly summarize what's in the Teacher version and note that the Student version is the same content with answers removed and writing space added. Offer to revise any section.
+After both files are written (Teacher by you, Student by the script), briefly summarize what's in the Teacher version and note that the Student version is the same content with answers replaced by proportional writing space and facilitation notes removed. Offer to revise any section — and if the user wants changes, edit the Teacher file and re-run the script to regenerate the Student file.
 
 ## A few important nuances
 
