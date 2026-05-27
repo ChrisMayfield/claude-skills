@@ -106,7 +106,7 @@ Draft 1–2 application questions per learning objective and check with the user
 
 ### Step 5 — Key (concept invention) question
 
-For each learning cycle, write the **key question** — the moment where students articulate the new insight in their own words. This is the last question before the application step. It often looks like:
+For each learning cycle, write the **key question** — the moment where students articulate the new insight in their own words. This is often the last question before the application step. It often looks like:
 
 - "Based on your answers to questions 1–4, write a rule that predicts ___."
 - "In one sentence, explain why ___."
@@ -134,7 +134,11 @@ A good model:
 - **Does not state the concept being developed.** In a Learning Cycle activity, the model shows the evidence for the concept, not the concept itself.
 - **Is engaging.** Real-world context, relevant data, or a surprising contrast helps.
 
-Describe the model concretely. If it's a table, write the table out in Markdown. If it's a diagram, describe it in enough detail that the user could draw or generate it. If it's code or data, include the code or data inline.
+Describe the model concretely. If it's a table, write the table out in Markdown. If it's code or data, include the code or data inline.
+
+For diagrams and charts, prefer **Mermaid** code blocks (` ```mermaid ... ``` `) — they render natively in GitHub, VS Code (with the standard Markdown preview), and most modern Markdown viewers, so the diagram lives in the document itself rather than requiring the author to draw it separately. Mermaid handles flowcharts (`flowchart`), state machines (`stateDiagram-v2`), sequence diagrams (`sequenceDiagram`), class and ER diagrams (`classDiagram`, `erDiagram`), simple xy/bar/pie charts (`xychart-beta`, `pie`), timelines, and mindmaps. A flowchart showing the order of operations, a state diagram for a finite state machine, an ER diagram of database tables, a sequence diagram of an HTTP exchange, a pie chart of survey results — all of these belong in Mermaid.
+
+Fall back to prose description (detailed enough that the author could draw the figure) only when the diagram is outside what Mermaid can express well — e.g., labeled anatomical figures, electrical circuits, free-form scientific schematics, photographs, or charts with custom annotations. For an ASCII sketch (as in the rate-vs-[S] curve sketch in the enzyme kinetics example), a fenced code block is fine.
 
 ### Step 7 — Concept invention questions
 
