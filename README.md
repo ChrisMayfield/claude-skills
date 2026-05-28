@@ -7,6 +7,8 @@ Each skill is a self-contained directory with a `SKILL.md` specification and any
 
 - **[course-evaluations](course-evaluations/)** —
   Analyzes JMU student course evaluation CSVs and produces actionable reports for formative reflection or promotion review.
+- **[pogil-activity-writer](pogil-activity-writer/)** —
+  Collaboratively authors POGIL classroom activities — structured worksheets guiding student teams through a model, questions, and application.
 
 ## Usage
 

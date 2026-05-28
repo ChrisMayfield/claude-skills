@@ -33,6 +33,7 @@ The markdown body defines the full skill interface: trigger conditions, expected
 ## Current skills
 
 - **`course-evaluations/`** — Analyzes JMU student course evaluation CSVs. Produces formative reports (single semester/year) or longitudinal evidence documents (multi-year, for promotion/tenure). Implemented in `scripts/parse_evaluations.py`.
+- **`pogil-activity-writer/`** — Collaboratively authors POGIL (Process Oriented Guided Inquiry Learning) classroom activities. Walks users through backward design and produces a teacher version (with sample answers and facilitation notes) and a student version (with writing space).
 
 ## Adding a new skill
 
