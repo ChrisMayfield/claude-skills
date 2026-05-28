@@ -254,7 +254,7 @@ Four formatting conventions for the Teacher version (the script handles the Stud
       > ***Sample:*** Student-team-voice answer here.
    ```
 
-3. **Vertical breathing room after every question.** The `&nbsp;` separator belongs to the question above it (it is the question's trailing breathing room), not to the gap between questions. Indent it to match the indentation of the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This rule applies to **every** numbered item, including the last question of each model (before the next `## Model` heading) and the last exercise (before `## Problem`).
+3. **Vertical breathing room after every question.** The `&nbsp;` separator belongs to the question above it (it is the question's trailing breathing room), not to the gap between questions. Indent it to match the indentation of the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This rule applies to **every** numbered item, including the last question of each model (before the next `## Model` heading) and the last exercise (before `## Problem`). Also insert an un-indented `&nbsp;` between each model's content (table, diagram, code block, etc.) and the first question, so the questions are visually set apart from the model they reference.
 4. **No `---` horizontal rules between sections.** Use a standalone `&nbsp;` line instead. VS Code and GitHub already render a horizontal rule visually after level-1 and level-2 headings, so an explicit `---` produces a doubled rule that hurts readability. The `&nbsp;` just inserts a blank line of breathing room.
 
 Here is the Teacher template:
@@ -284,6 +284,8 @@ and what's coming. Optional — instructors often provide this aloud at the star
 ## Model 1: [Descriptive title]
 
 [The model itself — table, diagram description, text, code, etc.]
+
+&nbsp;
 
 1. [First question — typically a short directed question that orients the team to the model]
    > ***Sample:*** [Student-team-voice answer.]
