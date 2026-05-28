@@ -138,6 +138,8 @@ Now design the model — the artifact students will explore. A model can be:
 
 A good model:
 
+- **Fits on approximately one printed page.** A model that spills onto a second page is too much — students lose the thread between the data and the questions. If the model is growing large, split it across two learning cycles rather than cramming it into one.
+- **Contains only what students need for this learning cycle.** Don't include tables, columns, schema elements, or data that aren't referenced until a later model. Presenting unused material creates noise and signals to students that they're supposed to use it — which sends them down dead ends. Each model should be self-contained: everything in it is needed, and nothing in it is extra.
 - **Provides enough exemplars for inference.** A single example is rarely enough for students to spot a pattern. 3–5 contrasting cases is common. Show variation along the dimension that matters — and ideally, include cases that are similar in irrelevant ways so students have to identify the right feature.
 - **Uses standard representations** for the field.
 - **Is clear, concise, and visually clean.** No distracting information.
@@ -185,16 +187,16 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label, and follow every question with an indented `&nbsp;` line as trailing breathing room (full details in the Output format section's convention #3). This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label followed by a `<br>` tag, and follow every question with an indented `&nbsp;` line as trailing breathing room (full details in the Output format section's convention #3). This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
-   > ***Sample:*** About 1.15×. Rate goes from 33.3 to 38.5 — barely any change despite the big jump in [S].
+   > ***Sample:***<br>About 1.15×. Rate goes from 33.3 to 38.5 — barely any change despite the big jump in [S].
 
    &nbsp;
 
 4. The next question goes here.
-   > ***Sample:*** Its answer goes here.
+   > ***Sample:***<br>Its answer goes here.
 ```
 
 Inline placement matters: it lets the author (and any reviewer) read each question and its expected answer together, which is the fastest way to catch a question that is unclear, too hard, or misaimed. A traditional answer key in a separate section forces the reader to flip back and forth and loses this benefit.
@@ -227,11 +229,12 @@ Once the user has accepted the activity, write the Teacher file to `/mnt/user-da
 python scripts/generate_student_version.py /mnt/user-data/outputs/<topic-slug>_Teacher.md
 ```
 
-The script writes the Student file alongside the Teacher file, with `_Teacher.md` replaced by `_Student.md`. It performs three deterministic transformations on the Teacher file:
+The script writes the Student file alongside the Teacher file, with `_Teacher.md` replaced by `_Student.md`. It performs four deterministic transformations on the Teacher file:
 
 1. Drops the entire `# Facilitation Notes` section.
-2. Replaces every `> ***Sample:*** ...` line with vertical writing space — a series of indented `&nbsp;` lines, **proportional to the sample answer's length** (roughly one writing line per ~70 characters of sample, with a floor of 2 lines and a ceiling of 8 lines). Longer answers get more room to write.
+2. Replaces every `> ***Sample:***` block with vertical writing space — a series of indented `&nbsp;` lines, **proportional to the sample answer's total length** (roughly one writing line per ~70 characters, with a floor of 2 lines and a ceiling of 8 lines). A sample block may span multiple consecutive `> ` lines (e.g., a query result on a second line); all are consumed. Both `***Sample:***<br>` and legacy `***Sample:*** ` forms are recognised.
 3. Removes the redundant `&nbsp;` separator that followed each sample answer (since the writing space now serves that role).
+4. Inserts a blank line between the question text and the first `&nbsp;` writing line, so the writing space is visually separated from the question.
 
 Everything else is preserved verbatim. Do not try to produce the Student file by paraphrasing the Teacher file — always invoke the script, since it ensures the two files stay in sync. After the script runs, call `present_files` with both filepaths, Teacher first.
 
@@ -247,11 +250,11 @@ Two Markdown files in `/mnt/user-data/outputs/`:
 Four formatting conventions for the Teacher version (the script handles the Student version automatically):
 
 1. **No question-category headings.** Under each model is a single numbered list of questions — no `### Exploration` / `### Concept invention` / `### Application` subheadings. (See the "*A critical point about Exploration / Invention / Application*" subsection earlier for why.)
-2. **Sample answers inline, bold-italic label.** Every question is followed immediately by its sample answer, formatted as a blockquote with a ***Sample:*** label (bold + italic):
+2. **Sample answers inline, bold-italic label with line break.** Every question is followed immediately by its sample answer, formatted as a blockquote with a ***Sample:*** label (bold + italic) and a `<br>` tag so the answer text starts on its own line:
 
    ```
    3. Question text here?
-      > ***Sample:*** Student-team-voice answer here.
+      > ***Sample:***<br>Student-team-voice answer here.
    ```
 
 3. **Vertical breathing room after every question.** The `&nbsp;` separator belongs to the question above it (it is the question's trailing breathing room), not to the gap between questions. Indent it to match the indentation of the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This rule applies to **every** numbered item, including the last question of each model (before the next `## Model` heading) and the last exercise (before `## Problem`). Also insert an un-indented `&nbsp;` between each model's content (table, diagram, code block, etc.) and the first question, so the questions are visually set apart from the model they reference.
@@ -276,7 +279,7 @@ and what's coming. Optional — instructors often provide this aloud at the star
 - [Objective 1]
 - [Objective 2]
 
-**Process skills:**
+**Process:**
 - [Process skill goal 1 with category in parentheses]
 
 &nbsp;
@@ -288,27 +291,27 @@ and what's coming. Optional — instructors often provide this aloud at the star
 &nbsp;
 
 1. [First question — typically a short directed question that orients the team to the model]
-   > ***Sample:*** [Student-team-voice answer.]
+   > ***Sample:***<br>[Student-team-voice answer.]
 
    &nbsp;
 
 2. [Next question — could be another orienting question, or could be an inference depending on what the sequence needs]
-   > ***Sample:*** [Answer.]
+   > ***Sample:***<br>[Answer.]
 
    &nbsp;
 
 3. [Continue sequencing — let the questions follow the natural arc from observation toward the concept, weaving in further orienting questions if a team needs to look at a specific feature mid-sequence]
-   > ***Sample:*** [Answer.]
+   > ***Sample:***<br>[Answer.]
 
    &nbsp;
 
 4. [The key question — often phrased as "in your own words, describe…" or "complete this statement…". This is where new terminology gets introduced or articulated.]
-   > ***Sample:*** [Answer; for open phrasing, note "(variation expected)" and give one plausible version.]
+   > ***Sample:***<br>[Answer; for open phrasing, note "(variation expected)" and give one plausible version.]
 
    &nbsp;
 
 5. [Application question — apply the just-developed concept to a fresh case.]
-   > ***Sample:*** [Answer with the justification students should give.]
+   > ***Sample:***<br>[Answer with the justification students should give.]
 
    &nbsp;
 
@@ -323,12 +326,12 @@ and what's coming. Optional — instructors often provide this aloud at the star
 [2+ per content objective. Variations on the application questions for practice after class. Use the same inline-answer format with `&nbsp;` separators between items.]
 
 1. [Exercise]
-   > ***Sample:*** [Answer.]
+   > ***Sample:***<br>[Answer.]
 
    &nbsp;
 
 2. [Exercise]
-   > ***Sample:*** [Answer.]
+   > ***Sample:***<br>[Answer.]
 
    &nbsp;
 
@@ -336,7 +339,7 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
 [A higher-order problem distinct from exercises — student doesn't immediately know what to do, may integrate multiple concepts, may sit in a real-world context.]
 
-> ***Sample:*** [Answer, possibly with multiple acceptable approaches noted.]
+> ***Sample:***<br>[Answer, possibly with multiple acceptable approaches noted.]
 
 &nbsp;
 

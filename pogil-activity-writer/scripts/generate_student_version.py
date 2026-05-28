@@ -9,11 +9,16 @@ Produces: same directory, with `_Teacher.md` in the filename replaced by `_Stude
 
 Transformations:
     1. The entire `# Facilitation Notes` section (heading and everything after) is dropped.
-    2. Every `> ***Sample:*** ...` line is removed and replaced with vertical writing
-       space — a series of indented `&nbsp;` lines, with the count proportional to the
-       length of the sample answer (so longer answers get more room to write).
+    2. Every `> ***Sample:***` block is removed and replaced with vertical writing space —
+       a series of indented `&nbsp;` lines, with the count proportional to the total
+       length of the sample answer (so longer answers get more room to write). A sample
+       block may span multiple consecutive `> ` lines; all are consumed and their combined
+       length drives the line count. Both `***Sample:***<br>` and `***Sample:*** ` forms
+       are recognised.
     3. The redundant `&nbsp;` separator that originally followed each sample answer is
        removed, because the writing space now serves the same role.
+    4. A blank line is inserted between the question text and the first `&nbsp;` writing
+       line so that the writing space is visually separated from the question.
 
 The script preserves everything else verbatim: title, Why?, Prerequisites, Learning
 Objectives, Models, all question text, Exercises, Problem, and the `&nbsp;` separators
@@ -55,11 +60,23 @@ def generate_student(teacher_text: str) -> str:
 
         # 2 & 3. Replace sample answer with proportional writing space,
         #        and skip the redundant trailing separator.
-        sample_match = re.match(r"^(\s*)> \*\*\*Sample:\*\*\*\s*(.*)$", line)
+        # The sample line may use `***Sample:***<br>` or `***Sample:*** ` (legacy).
+        sample_match = re.match(r"^(\s*)> \*\*\*Sample:\*\*\*(?:<br>)?\s*(.*)$", line)
         if sample_match:
             indent = sample_match.group(1)
             sample_text = sample_match.group(2)
+            i += 1
+
+            # Consume any continuation blockquote lines (> ...) that are part
+            # of the same sample answer. Include their text in the length
+            # estimate so longer multi-line answers get proportionally more
+            # writing space.
+            while i < len(lines) and re.match(r"^\s*>", lines[i]):
+                sample_text += " " + lines[i].lstrip().lstrip(">").strip()
+                i += 1
+
             n = writing_lines_for(sample_text)
+            out.append("")  # blank line between question text and writing space
             for k in range(n):
                 out.append(f"{indent}&nbsp;")
                 if k < n - 1:
@@ -68,7 +85,7 @@ def generate_student(teacher_text: str) -> str:
             # Look ahead past blank lines for the original `&nbsp;` separator
             # that belongs to this question. If found, skip past it (and add a
             # single blank line as a delimiter to the next item).
-            j = i + 1
+            j = i
             while j < len(lines) and lines[j].strip() == "":
                 j += 1
             if j < len(lines) and re.match(r"^\s*&nbsp;\s*$", lines[j]):
@@ -77,10 +94,7 @@ def generate_student(teacher_text: str) -> str:
                 # Eat one trailing blank line if present, to avoid stacking blanks.
                 if i < len(lines) and lines[i].strip() == "":
                     i += 1
-                continue
-            else:
-                i += 1
-                continue
+            continue
 
         out.append(line)
         i += 1
