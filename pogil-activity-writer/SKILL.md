@@ -1,13 +1,13 @@
 ---
 name: pogil-activity-writer
-description: Collaboratively author Process Oriented Guided Inquiry Learning (POGIL) classroom activities — structured worksheets that guide student teams through a model, questions, and application. Use this skill whenever the user asks to create or draft a POGIL activity, guided inquiry worksheet, learning cycle activity, or any classroom activity following the POGIL methodology — even if they don't explicitly say "POGIL." Trigger on requests like "write a POGIL activity on photosynthesis," "I need a guided inquiry worksheet for my chem class," "make a learning cycle activity on [topic]," or "help me design an inquiry-based lesson on X." Users sometimes say "write a POGIL" as shorthand — recognize the request, but in your own writing always say "POGIL activity," since POGIL is the pedagogy and the activity is the artifact. The skill walks the user through backward design and produces two Markdown files — a teacher version with inline sample answers and facilitation notes, and a student version with writing space.
+description: Collaboratively author Process Oriented Guided Inquiry Learning (POGIL) classroom activities — structured worksheets that guide student teams through a model, questions, and application. Use this skill whenever the user asks to create or draft a POGIL activity, guided inquiry worksheet, learning cycle activity, or any classroom activity following the POGIL methodology — even if they don't explicitly say "POGIL." Trigger on requests like "write a POGIL activity on photosynthesis," "make a learning cycle activity on [topic]," or "help me design an inquiry-based lesson on X." Users sometimes say "write a POGIL" as shorthand — recognize the request, but call drafts "this activity," not "your POGIL activity"; POGIL® is The POGIL Project's mark for endorsed materials only. The skill walks the user through backward design and produces two Markdown files — a teacher version with inline sample answers and facilitation notes, and a student version with writing space.
 ---
 
 # POGIL Activity Writer
 
 ## What POGIL is, briefly
 
-POGIL is a student-centered pedagogy in which small teams of students work through a specially designed activity during class while the instructor facilitates rather than lectures. A POGIL activity has three defining features:
+POGIL is a student-centered pedagogy in which small teams of students work through a specially designed activity during class while the instructor facilitates rather than lectures. Activities that follow POGIL pedagogy have three defining features:
 
 1. **Team-based and instructor-facilitated.** Designed for self-managed teams of 3–4 students; the instructor is a facilitator, not a source of information.
 2. **Guided exploration.** Students construct understanding by working through a model (data, diagram, text, equation, code, etc.) and a sequence of questions. They are not told the concept up front.
@@ -19,9 +19,21 @@ A typical 45–50 minute activity contains 2–3 **Learning Cycles**. Each Learn
 - **Concept Invention:** A key question prompts the team to articulate the underlying pattern or concept in their own words. Terminology is introduced *here*, not before.
 - **Application:** Students apply the new concept to a fresh case to consolidate it.
 
+## About the POGIL trademark
+
+POGIL® is a registered trademark of The POGIL Project. The mark is used for activities and materials that have been reviewed and endorsed by The POGIL Project; drafts produced by this skill are **not** POGIL activities. They are guided inquiry activities written following POGIL pedagogical guidelines, with the expectation that an author may submit them to The POGIL Project for peer review and possible endorsement (see https://pogil.org).
+
+This shapes how Claude talks about the work, in three places:
+
+- **In the activity itself** (title, Why?, model descriptions, question text — any prose Claude writes into the deliverable): never use the word POGIL. Use neutral terms like *"this activity"* or *"this guided inquiry activity."* A good title is topic-focused (e.g., *"Enzyme Kinetics: How Does Reaction Rate Depend on Substrate?"*), never something like *"POGIL Activity: Enzyme Kinetics."*
+- **In conversation with the user** while drafting: refer to the draft as *"your activity,"* *"this learning cycle activity,"* or similar — not *"your POGIL activity."* It is fine if the user uses the shorthand themselves; Claude just doesn't echo it back.
+- **In filenames**: just the topic slug and the role suffix. No "pogil" or "activity" in the filename (this is a trademark requirement, not an aesthetic one).
+
+Reserve the phrase *"POGIL activity"* for materials that have actually been endorsed by The POGIL Project.
+
 ## How to use this skill
 
-POGIL activities are written by **backward design** — start from what students should be able to do at the end, and work backward to the model. When invoked, walk the user through the workflow below conversationally. Don't try to one-shot the whole activity from a one-line prompt. Each step is a small conversation: propose, get feedback, refine, then move on.
+Activities that follow POGIL pedagogy are written by **backward design** — start from what students should be able to do at the end, and work backward to the model. When invoked, walk the user through the workflow below conversationally. Don't try to one-shot the whole activity from a one-line prompt. Each step is a small conversation: propose, get feedback, refine, then move on.
 
 If the user's initial request is vague ("help me write a POGIL activity"), start with Step 0. If they've given a clear topic and audience ("write a POGIL activity on Newton's third law for intro physics"), still walk through the steps but move briskly through ones where the answer is obvious from context. Skipping the elicitation step entirely produces generic activities that don't fit any real classroom — the conversation is the point.
 
@@ -59,9 +71,9 @@ Propose objectives, then ask the user to confirm, edit, or add their own.
 
 ### Step 2 — Process skill goals
 
-Choose 1–2 process skills the activity will explicitly develop. Every well-designed POGIL activity exercises process skills implicitly, but a strong activity targets one or two *by design* — meaning the structure of the questions develops the skill, not just classroom facilitation.
+Choose 1–2 process skills the activity will explicitly develop. Every well-designed guided inquiry activity exercises process skills implicitly, but a strong activity targets one or two *by design* — meaning the structure of the questions develops the skill, not just classroom facilitation.
 
-The seven canonical POGIL process skills:
+The seven canonical process skills identified by The POGIL Project:
 
 - **Teamwork** — Interacting with others and building on individual strengths toward a common goal.
 - **Oral and Written Communication** — Conveying information through speech or writing.
@@ -230,7 +242,7 @@ Two Markdown files in `/mnt/user-data/outputs/`:
 - `<topic-slug>_Teacher.md` — the authoring/review version. Sample answers inline, facilitation notes at the end. Written by Claude.
 - `<topic-slug>_Student.md` — the student-facing version. Proportional writing space in place of answers, facilitation notes removed. Generated by the bundled script.
 
-`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix.
+`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix. (This is a trademark requirement; see the "About the POGIL trademark" section above.)
 
 Four formatting conventions for the Teacher version (the script handles the Student version automatically):
 
@@ -248,7 +260,7 @@ Four formatting conventions for the Teacher version (the script handles the Stud
 Here is the Teacher template:
 
 ```markdown
-# [Activity Title]
+# [Activity Title — topic-focused; do not include the word "POGIL"]
 
 ## Why?
 [1–3 sentences motivating the activity for students. Connects to what they've learned
@@ -352,9 +364,9 @@ After both files are written, briefly summarize what's in the activity and offer
 
 ## A few important nuances
 
-**Don't introduce terminology before students invent it.** If the activity teaches "valence electron," that phrase shouldn't appear in the model or in exploration questions — only in or after the key question. This is the single most common mistake in drafts of POGIL activities. The model should contain *evidence* for the concept, presented in everyday or pre-existing terminology; the new term is the thing the students are about to coin.
+**Don't introduce terminology before students invent it.** If the activity teaches "valence electron," that phrase shouldn't appear in the model or in exploration questions — only in or after the key question. This is the single most common mistake in drafts of guided inquiry activities. The model should contain *evidence* for the concept, presented in everyday or pre-existing terminology; the new term is the thing the students are about to coin.
 
-**Models need contrast.** "Here is one example of an exothermic reaction" is not a sufficient model for a POGIL activity. "Here are five reactions, three of which release energy and two of which absorb it, with the energy values" is, because the student can see the pattern. When choosing examples for a model, ask: what would change if the concept were false? Make sure the model contains cases that distinguish.
+**Models need contrast.** "Here is one example of an exothermic reaction" is not a sufficient model for a guided inquiry activity. "Here are five reactions, three of which release energy and two of which absorb it, with the energy values" is, because the student can see the pattern. When choosing examples for a model, ask: what would change if the concept were false? Make sure the model contains cases that distinguish.
 
 **Questions should be a sequence, not a list.** Each question should rest on the answers to the previous ones, building toward the key question. If you could shuffle the questions and they'd still work, the sequence isn't doing enough work.
 
