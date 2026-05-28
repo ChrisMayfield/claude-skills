@@ -5,8 +5,6 @@ description: Collaboratively author Process Oriented Guided Inquiry Learning (PO
 
 # POGIL Activity Writer
 
-A skill for collaboratively writing POGIL (Process Oriented Guided Inquiry Learning) classroom activities. The output is a single Markdown file containing a student-facing worksheet plus teacher materials, structured around the Learning Cycle (Exploration → Concept Invention → Application).
-
 ## What POGIL is, briefly
 
 POGIL is a student-centered pedagogy in which small teams of students work through a specially designed activity during class while the instructor facilitates rather than lectures. A POGIL activity has three defining features:
@@ -136,7 +134,7 @@ A good model:
 
 Describe the model concretely. If it's a table, write the table out in Markdown. If it's code or data, include the code or data inline.
 
-For diagrams and charts, prefer **Mermaid** code blocks (` ```mermaid ... ``` `) — they render natively in GitHub, VS Code (with the standard Markdown preview), and most modern Markdown viewers, so the diagram lives in the document itself rather than requiring the author to draw it separately. Mermaid handles flowcharts (`flowchart`), state machines (`stateDiagram-v2`), sequence diagrams (`sequenceDiagram`), class and ER diagrams (`classDiagram`, `erDiagram`), simple xy/bar/pie charts (`xychart-beta`, `pie`), timelines, and mindmaps. A flowchart showing the order of operations, a state diagram for a finite state machine, an ER diagram of database tables, a sequence diagram of an HTTP exchange, a pie chart of survey results — all of these belong in Mermaid.
+For diagrams and charts, prefer **Mermaid** code blocks (` ```mermaid ... ``` `) — they render natively in GitHub, VS Code (with the standard Markdown preview), and most modern Markdown viewers, so the diagram lives in the document itself rather than requiring the author to draw it separately. Mermaid supports over two dozen diagram types — flowcharts, state machines, sequence diagrams, class and ER diagrams, xy/bar/pie charts, timelines, and mindmaps are common examples; consult the Mermaid documentation for the full list and current syntax.
 
 Fall back to prose description (detailed enough that the author could draw the figure) only when the diagram is outside what Mermaid can express well — e.g., labeled anatomical figures, electrical circuits, free-form scientific schematics, photographs, or charts with custom annotations. For an ASCII sketch (as in the rate-vs-[S] curve sketch in the enzyme kinetics example), a fenced code block is fine.
 
@@ -175,7 +173,7 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label. After every question (including the last question in a model and the last exercise before the Problem) insert an indented `&nbsp;` on its own line as trailing breathing room — the spacing belongs to the question, so its indent matches the question's content (3 spaces under a top-level `1.`; 7 spaces under a sub-item like `    a.`). This makes scanning much easier when an author is reviewing question-and-answer together. This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with a bold-italic ***Sample:*** label, and follow every question with an indented `&nbsp;` line as trailing breathing room (full details in the Output format section's convention #3). This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
@@ -194,10 +192,6 @@ Student-team answers:
 - May use informal or incomplete phrasing — the goal is to show a credible student-team articulation, not an expert's polished version. "Rate stops going up" is a fine team answer; "rate asymptotically approaches Vmax" is not.
 - For divergent questions, include "(variation expected)" before the sample and give one plausible correct version. If multiple substantively different correct answers exist, list them.
 
-Sample answers appear inline for the main activity questions, the exercises, and the problems. **Facilitation notes** (what to watch for, common misconceptions, probing questions, suggested timing) still live in a separate Facilitation Notes section at the end of the document — those are about *running* the activity, not about the answers themselves.
-
-**A note on what this output is for.** The Markdown produced by this skill is the **authoring/review version** — sample answers inline, vertical breathing room for scanning. Converting to a student-facing handout (removing the sample answers, adding space for handwritten or typed responses, paginating for print or for an LMS) is a separate downstream step the author handles once the content is solid. Don't try to optimize the skill's output for student distribution; the priority is making the activity easy for the instructor to read, review, and revise.
-
 ### Step 10 — Review and refine
 
 Walk through this checklist with the user before finalizing:
@@ -215,40 +209,32 @@ Offer to revise any section based on the review.
 
 ### Step 11 — Generate the student version
 
-Once the user has accepted the activity, run the bundled script to produce the student-facing version:
+Once the user has accepted the activity, write the Teacher file to `/mnt/user-data/outputs/<topic-slug>_Teacher.md` (see the Output format section below for naming rules), then run the bundled script to produce the Student file:
 
 ```bash
 python scripts/generate_student_version.py /mnt/user-data/outputs/<topic-slug>_Teacher.md
 ```
 
-(Invoke the script with the path to the Teacher file. The script writes the Student file alongside it in the same directory, with `_Teacher.md` replaced by `_Student.md` in the filename.)
-
-The script performs three deterministic transformations:
+The script writes the Student file alongside the Teacher file, with `_Teacher.md` replaced by `_Student.md`. It performs three deterministic transformations on the Teacher file:
 
 1. Drops the entire `# Facilitation Notes` section.
 2. Replaces every `> ***Sample:*** ...` line with vertical writing space — a series of indented `&nbsp;` lines, **proportional to the sample answer's length** (roughly one writing line per ~70 characters of sample, with a floor of 2 lines and a ceiling of 8 lines). Longer answers get more room to write.
-3. Removes the redundant `&nbsp;` separator that originally followed each sample answer (since the writing space now serves that role).
+3. Removes the redundant `&nbsp;` separator that followed each sample answer (since the writing space now serves that role).
 
-Everything else — title, Why?, Prerequisites, Learning Objectives, Models, question text, Exercises, Problem, table contents, code snippets, and the `&nbsp;` separators between non-question sections — is preserved verbatim.
-
-Do not try to produce the Student file yourself by paraphrasing or rewriting the Teacher file. Always invoke the script. It is deterministic, fast, and ensures the two files stay in sync.
-
-After the script runs, call `present_files` with both filepaths, Teacher version first.
+Everything else is preserved verbatim. Do not try to produce the Student file by paraphrasing the Teacher file — always invoke the script, since it ensures the two files stay in sync. After the script runs, call `present_files` with both filepaths, Teacher first.
 
 ## Output format
 
-After all sections are drafted and the user has accepted the activity, write the Teacher file and run the script to produce the Student file. Two Markdown files end up in `/mnt/user-data/outputs/`:
+Two Markdown files in `/mnt/user-data/outputs/`:
 
-- `<topic-slug>_Teacher.md` — the authoring/review version with sample answers inline and facilitation notes at the end. **Written by Claude.**
-- `<topic-slug>_Student.md` — the student-facing version with proportional writing space in place of answers and no facilitation notes. **Generated by the bundled script** from the Teacher file.
+- `<topic-slug>_Teacher.md` — the authoring/review version. Sample answers inline, facilitation notes at the end. Written by Claude.
+- `<topic-slug>_Student.md` — the student-facing version. Proportional writing space in place of answers, facilitation notes removed. Generated by the bundled script.
 
-`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix `Teacher` or `Student`. Call `present_files` with both filepaths, Teacher first.
-
-The Teacher version is the authoring/review version, optimized for the instructor to read, review, and revise. Sample answers are inline; vertical spacing is generous.
+`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix.
 
 Four formatting conventions for the Teacher version (the script handles the Student version automatically):
 
-1. **No question-category headings.** Under each model is a single numbered list of questions. Do not insert `### Exploration` / `### Concept invention` / `### Application` subheadings. The three categories live in the author's head; they do not appear in the document.
+1. **No question-category headings.** Under each model is a single numbered list of questions — no `### Exploration` / `### Concept invention` / `### Application` subheadings. (See the "*A critical point about Exploration / Invention / Application*" subsection earlier for why.)
 2. **Sample answers inline, bold-italic label.** Every question is followed immediately by its sample answer, formatted as a blockquote with a ***Sample:*** label (bold + italic):
 
    ```
@@ -362,7 +348,7 @@ and what's coming. Optional — instructors often provide this aloud at the star
 - [A stretch question or extension that prepares for the next class]
 ```
 
-After both files are written (Teacher by you, Student by the script), briefly summarize what's in the Teacher version and note that the Student version is the same content with answers replaced by proportional writing space and facilitation notes removed. Offer to revise any section — and if the user wants changes, edit the Teacher file and re-run the script to regenerate the Student file.
+After both files are written, briefly summarize what's in the activity and offer to revise any section. If the user requests changes, edit the Teacher file and re-run the script to regenerate the Student file.
 
 ## A few important nuances
 
