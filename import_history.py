@@ -9,6 +9,7 @@ using the zip file's modification time as the date.
 Run from the repo root: python3 import_history.py
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -44,6 +45,11 @@ def extract(src_path: Path):
     else:
         with zipfile.ZipFile(src_path) as z:
             z.extractall(".")
+            for info in z.infolist():
+                extracted = Path(info.filename)
+                if extracted.exists():
+                    mtime = datetime(*info.date_time).timestamp()
+                    os.utime(extracted, (mtime, mtime))
 
 
 def generate_message(diff: str) -> str:
