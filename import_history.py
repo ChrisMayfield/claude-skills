@@ -21,8 +21,8 @@ SRC_DIR = Path("TODO")
 DST_DIR = Path("pogil-activity-writer")
 
 
-def sorted_skill_files() -> list[Path]:
-    files = list(SRC_DIR.glob("[Vv]*.skill"))
+def sorted_source_files() -> list[Path]:
+    files = list(SRC_DIR.glob("[Vv]*.skill")) + list(SRC_DIR.glob("[Vv]*.md"))
     return sorted(files, key=lambda p: int(re.search(r"\d+", p.name).group()))
 
 
@@ -35,11 +35,15 @@ def run(cmd: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True)
 
 
-def extract(zip_path: Path):
+def extract(src_path: Path):
     if DST_DIR.exists():
         shutil.rmtree(DST_DIR)
-    with zipfile.ZipFile(zip_path) as z:
-        z.extractall(".")
+    if src_path.suffix == ".md":
+        DST_DIR.mkdir()
+        shutil.copy2(src_path, DST_DIR / "SKILL.md")
+    else:
+        with zipfile.ZipFile(src_path) as z:
+            z.extractall(".")
 
 
 def generate_message(diff: str) -> str:
@@ -61,19 +65,19 @@ def main():
         print(f"Error: {SRC_DIR}/ not found. Run from the repo root.")
         sys.exit(1)
 
-    skill_files = sorted_skill_files()
-    if not skill_files:
-        print(f"No .skill files found in {SRC_DIR}/")
+    source_files = sorted_source_files()
+    if not source_files:
+        print(f"No .skill or .md files found in {SRC_DIR}/")
         sys.exit(1)
 
-    print(f"Found {len(skill_files)} skill files: "
-          f"{skill_files[0].name} .. {skill_files[-1].name}\n")
+    print(f"Found {len(source_files)} files: "
+          f"{source_files[0].name} .. {source_files[-1].name}\n")
 
-    for zip_path in skill_files:
-        date_str = get_mtime_iso(zip_path)
-        print(f"{zip_path.name}  ({date_str})")
+    for src_path in source_files:
+        extract(src_path)
+        date_str = get_mtime_iso(DST_DIR / "SKILL.md")
+        print(f"{src_path.name}  ({date_str})")
 
-        extract(zip_path)
         run(["git", "add", str(DST_DIR)])
 
         diff = run(["git", "diff", "--cached"]).stdout
