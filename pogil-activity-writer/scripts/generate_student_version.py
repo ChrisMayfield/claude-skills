@@ -9,12 +9,14 @@ Produces: same directory, with `_Teacher.md` in the filename replaced by `_Stude
 
 Transformations:
     1. The entire `# Facilitation Notes` section (heading and everything after) is dropped.
-    2. Every `> ***Sample:***` block is removed and replaced with vertical writing space —
-       a series of indented `&nbsp;` lines, with the count proportional to the total
-       length of the sample answer (so longer answers get more room to write). A sample
-       block may span multiple consecutive `> ` lines; all are consumed and their combined
-       length drives the line count. Both `***Sample:***<br>` and `***Sample:*** ` forms
-       are recognised.
+    2. Every sample block is removed and replaced with vertical writing space — a series
+       of indented `&nbsp;` lines, with the count proportional to the total length of the
+       sample answer (so longer answers get more room to write). A sample block looks like:
+           > ***Sample:***<br>
+           > [answer line 1]
+           > [optional answer line 2, ...]
+       The marker line carries no answer text; the answer lives on the subsequent
+       blockquote lines, all of which are consumed.
     3. The redundant `&nbsp;` separator that originally followed each sample answer is
        removed, because the writing space now serves the same role.
     4. A blank line is inserted between the question text and the first `&nbsp;` writing
@@ -60,17 +62,20 @@ def generate_student(teacher_text: str) -> str:
 
         # 2 & 3. Replace sample answer with proportional writing space,
         #        and skip the redundant trailing separator.
-        # The sample line may use `***Sample:***<br>` or `***Sample:*** ` (legacy).
-        sample_match = re.match(r"^(\s*)> \*\*\*Sample:\*\*\*(?:<br>)?\s*(.*)$", line)
+        # A sample block looks like:
+        #     > ***Sample:***<br>
+        #     > [answer line 1]
+        #     > [optional answer line 2, etc.]
+        # The marker line carries no answer text; the answer lives on the
+        # subsequent blockquote lines.
+        sample_match = re.match(r"^(\s*)> \*\*\*Sample:\*\*\*<br>\s*$", line)
         if sample_match:
             indent = sample_match.group(1)
-            sample_text = sample_match.group(2)
+            sample_text = ""
             i += 1
 
-            # Consume any continuation blockquote lines (> ...) that are part
-            # of the same sample answer. Include their text in the length
-            # estimate so longer multi-line answers get proportionally more
-            # writing space.
+            # Consume all consecutive blockquote lines as the sample answer.
+            # Their combined length drives the writing-space estimate.
             while i < len(lines) and re.match(r"^\s*>", lines[i]):
                 sample_text += " " + lines[i].lstrip().lstrip(">").strip()
                 i += 1
