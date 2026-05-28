@@ -17,12 +17,12 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-ZIPS_DIR = Path("zips")
-TARGET_DIR = Path("course-evaluations")
+SRC_DIR = Path("TODO")
+DST_DIR = Path("pogil-activity-writer")
 
 
 def sorted_skill_files() -> list[Path]:
-    files = list(ZIPS_DIR.glob("v*.skill"))
+    files = list(SRC_DIR.glob("[Vv]*.skill"))
     return sorted(files, key=lambda p: int(re.search(r"\d+", p.name).group()))
 
 
@@ -36,8 +36,8 @@ def run(cmd: list[str]) -> subprocess.CompletedProcess:
 
 
 def extract(zip_path: Path):
-    if TARGET_DIR.exists():
-        shutil.rmtree(TARGET_DIR)
+    if DST_DIR.exists():
+        shutil.rmtree(DST_DIR)
     with zipfile.ZipFile(zip_path) as z:
         z.extractall(".")
 
@@ -57,13 +57,13 @@ def generate_message(diff: str) -> str:
 
 
 def main():
-    if not ZIPS_DIR.is_dir():
-        print(f"Error: {ZIPS_DIR}/ not found. Run from the repo root.")
+    if not SRC_DIR.is_dir():
+        print(f"Error: {SRC_DIR}/ not found. Run from the repo root.")
         sys.exit(1)
 
     skill_files = sorted_skill_files()
     if not skill_files:
-        print(f"No .skill files found in {ZIPS_DIR}/")
+        print(f"No .skill files found in {SRC_DIR}/")
         sys.exit(1)
 
     print(f"Found {len(skill_files)} skill files: "
@@ -74,7 +74,7 @@ def main():
         print(f"{zip_path.name}  ({date_str})")
 
         extract(zip_path)
-        run(["git", "add", str(TARGET_DIR)])
+        run(["git", "add", str(DST_DIR)])
 
         diff = run(["git", "diff", "--cached"]).stdout
         if not diff.strip():
