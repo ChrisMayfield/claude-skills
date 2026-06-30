@@ -4,11 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - '*/SKILL.md'
-      - '*/scripts/**'
-      - '*/references/**'
-      - '*/assets/**'
-  workflow_dispatch:
+      - '.github/workflows/package-skills.yml'
+      - '*/**'
 
 jobs:
   release:
