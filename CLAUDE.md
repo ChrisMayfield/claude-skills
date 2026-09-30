@@ -23,7 +23,7 @@ The directory name must match the `name` field in `SKILL.md`.
 ```yaml
 ---
 name: skill-name          # lowercase, hyphens only, max 64 chars; must match directory name
-description: "..."        # how Claude decides when to invoke — be specific and keyword-rich; max 200 chars on claude.ai
+description: "..."        # how Claude decides when to invoke — be specific and keyword-rich; max 1024 chars; if unquoted, avoid ": " (breaks YAML)
 dependencies: python>=3.8, pandas>=1.5.0   # optional; Claude installs from PyPI/npm at load time
 ---
 ```
@@ -33,7 +33,7 @@ The markdown body defines the full skill interface: trigger conditions, expected
 ## Current skills
 
 - **`course-evaluations/`** — Analyzes JMU student course evaluation CSVs. Produces formative reports (single semester/year) or longitudinal evidence documents (multi-year, for promotion/tenure). Implemented in `scripts/parse_evaluations.py`.
-- **`pogil-activity-writer/`** — Collaboratively authors POGIL (Process Oriented Guided Inquiry Learning) classroom activities. Walks users through backward design and produces a teacher version (with sample answers and facilitation notes) and a student version (with writing space).
+- **`pogil-activity-writer/`** — Collaboratively authors POGIL (Process Oriented Guided Inquiry Learning) classroom activities. Walks users through backward design and produces teacher and student Word documents from a single teacher Markdown source. Implemented in `scripts/generate_student_version.py` (student Markdown) and `scripts/build_docx.js` (Word output).
 
 ## Adding a new skill
 
