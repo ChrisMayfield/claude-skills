@@ -1,1 +1,19 @@
-TODO
+# Backup files
+*~
+._*
+.DS_Store
+.~lock.*#
+
+# Temp files
+scratch/
+
+# JavaScript
+node_modules
+test-results
+
+# Python
+__pycache__/
+.pytest_cache/
+.coverage
+coverage.xml
+.ruff_cache/
