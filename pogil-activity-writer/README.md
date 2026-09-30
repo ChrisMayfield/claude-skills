@@ -31,17 +31,18 @@ Once installed, start with a request such as:
 
 > Help me write a guided inquiry activity on enzyme kinetics for an intro biology class.
 
-The skill will walk you through the backward-design steps, checking in with you at each stage, and finish by producing two Markdown files:
+The skill will walk you through the backward-design steps, checking in with you at each stage, and finish by producing two Word documents, ready to print or to upload to Google Docs for students to type into:
 
-- **`<topic>_Teacher.md`** — sample answers inline (in a `> ***Sample:***` blockquote under each question) plus facilitation notes at the end.
-- **`<topic>_Student.md`** — the same activity with answers replaced by proportional writing space and facilitation notes removed.
-    - This file is generated deterministically by the bundled [generate_student_version.py](scripts/generate_student_version.py).
+- **`<topic>_Teacher.docx`** — sample answers inline under each question, plus facilitation notes at the end.
+- **`<topic>_Student.docx`** — the same activity with answers replaced by answer boxes (sized to the expected answer, growing as students type, monospace for code) and facilitation notes removed.
+
+Both are built from a single editable source, **`<topic>_Teacher.md`**, which is delivered alongside them. The bundled [generate_student_version.py](scripts/generate_student_version.py) derives the student Markdown from it, and [build_docx.js](scripts/build_docx.js) (Node, using the `docx` package) converts both to Word. To revise an activity, edit the teacher Markdown and rebuild; never edit the Word files by hand.
 
 ## Installation
 
 Download the prebuilt skill package here: **[pogil-activity-writer.zip](https://github.com/ChrisMayfield/claude-skills/releases/download/skills-latest/pogil-activity-writer.zip)** (automatically built from this repository).
 
-Only Claude currently supports uploading a skill in the native `SKILL.md` format. For ChatGPT and Gemini, you recreate the same behavior as a Custom GPT or a Gem by pasting `SKILL.md` as the system instructions and attaching the script as a reference file. The conversational backward-design workflow works on all three; the automatic student-file generation depends on the platform being able to run the bundled Python script (reliable in Claude with code execution; on ChatGPT/Gemini the model can apply the same transformation, with less determinism).
+Only Claude currently supports uploading a skill in the native `SKILL.md` format. For ChatGPT and Gemini, you recreate the same behavior as a Custom GPT or a Gem by pasting `SKILL.md` as the system instructions and attaching the script as a reference file. The conversational backward-design workflow works on all three; the Word output depends on the platform being able to run the bundled Python and Node scripts (reliable in Claude with code execution; on ChatGPT/Gemini, expect Markdown output or a less faithful conversion).
 
 ### Claude
 

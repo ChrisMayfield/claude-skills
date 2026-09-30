@@ -1,6 +1,6 @@
 ---
 name: pogil-activity-writer
-description: Collaboratively author Process Oriented Guided Inquiry Learning (POGIL) classroom activities — structured worksheets that guide student teams through a model, questions, and application. Use this skill whenever the user asks to create or draft a POGIL activity, guided inquiry worksheet, learning cycle activity, or any classroom activity following the POGIL methodology — even if they don't explicitly say "POGIL." Trigger on requests like "write a POGIL activity on photosynthesis," "make a learning cycle activity on [topic]," or "help me design an inquiry-based lesson on X." Users sometimes say "write a POGIL" as shorthand — recognize the request, but call drafts "this activity," not "your POGIL activity"; POGIL® is The POGIL Project's mark for endorsed materials only. The skill walks the user through backward design and produces two Markdown files — a teacher version with inline sample answers and facilitation notes, and a student version with writing space.
+description: Collaboratively author Process Oriented Guided Inquiry Learning (POGIL) classroom activities — structured worksheets that guide student teams through a model, questions, and application. Use this skill whenever the user asks to create or draft a POGIL activity, guided inquiry worksheet, learning cycle activity, or any classroom activity following the POGIL methodology — even if they don't explicitly say "POGIL." Trigger on requests like "write a POGIL activity on photosynthesis," "make a learning cycle activity on [topic]," or "help me design an inquiry-based lesson on X." Users sometimes say "write a POGIL" as shorthand — recognize the request, but call drafts "this activity," not "your POGIL activity"; POGIL® is The POGIL Project's mark for endorsed materials only. The skill walks the user through backward design and produces two Word documents, for printing or for students to fill in on Google Docs — a teacher version with inline sample answers and facilitation notes, and a student version with answer boxes.
 ---
 
 # POGIL Activity Writer
@@ -36,6 +36,8 @@ Reserve the phrase *"POGIL activity"* for materials that have actually been endo
 Activities that follow POGIL pedagogy are written by **backward design** — start from what students should be able to do at the end, and work backward to the model. When invoked, walk the user through the workflow below conversationally. Don't try to one-shot the whole activity from a one-line prompt. Each step is a small conversation: propose, get feedback, refine, then move on.
 
 If the user's initial request is vague ("help me write a POGIL activity"), start with Step 0. If they've given a clear topic and audience ("write a POGIL activity on Newton's third law for intro physics"), still walk through the steps but move briskly through ones where the answer is obvious from context. Skipping the elicitation step entirely produces generic activities that don't fit any real classroom — the conversation is the point.
+
+Draft the activity **one model at a time**: write Model 1 and its questions, stop for the user's review, revise, and only then draft Model 2. Presenting the whole activity at once buries the user in material they can't review carefully, and a flaw in Model 1 usually propagates into everything after it.
 
 A note on pace: the user is an instructor with real expertise in their subject. Treat them as a content expert and yourself as the structural expert. Propose objectives, models, and questions; let them correct your subject-matter assumptions and push back on questions that are too easy, too hard, or wrong for their students.
 
@@ -146,9 +148,15 @@ A good model:
 - **Does not state the concept being developed.** In a Learning Cycle activity, the model shows the evidence for the concept, not the concept itself.
 - **Is engaging.** Real-world context, relevant data, or a surprising contrast helps.
 
+**Titles tell a story.** Give each model a concrete title that reads as the next chapter of one situation, and make each model visibly extend the previous one — "Model 1: Intramural Sports Teams," then "Model 2: A Schedule of Games," where Model 2 adds a table that refers to Model 1's. A continuing scenario lets students spend their attention on the new idea instead of on a new context, and makes it natural for a later question to revisit an earlier answer ("In question 7 you renumbered team 1; is that still accepted now?").
+
+**Predict-the-outcome models.** When a model is a set of operations whose results students predict (statements run against data, moves in a game, reactions under conditions), state explicitly in the model that *each one runs independently against the data as shown*; otherwise teams carry one statement's effect into the next and every later answer goes wrong. Build the operations as **contrast pairs** in which exactly one variable differs — the same offending row with a different constraint, or the same constraint hit by a different row — and ask about the pair together ("Statements C and D each insert a NULL, and only one is rejected. Decide which."). The pair isolates the feature that decides the outcome, which is the inference the model exists to support.
+
 Describe the model concretely. If it's a table, write the table out in Markdown. If it's code or data, include the code or data inline.
 
 For diagrams and charts, prefer **Mermaid** code blocks (` ```mermaid ... ``` `) — they render natively in GitHub, VS Code (with the standard Markdown preview), and most modern Markdown viewers, so the diagram lives in the document itself rather than requiring the author to draw it separately. Mermaid supports over two dozen diagram types — flowcharts, state machines, sequence diagrams, class and ER diagrams, xy/bar/pie charts, timelines, and mindmaps are common examples; consult the Mermaid documentation for the full list and current syntax.
+
+Because the deliverables are Word documents, a Mermaid block must be rendered to a PNG before the build (for example with `mmdc`, if available) and referenced as `![description](figure.png)`; the build script prints a Mermaid block as source text and warns. If rendering isn't possible, tell the user which figure needs to be drawn.
 
 Fall back to prose description (detailed enough that the author could draw the figure) only when the diagram is outside what Mermaid can express well — e.g., labeled anatomical figures, electrical circuits, free-form scientific schematics, photographs, or charts with custom annotations. For an ASCII sketch (as in the rate-vs-[S] curve sketch in the enzyme kinetics example), a fenced code block is fine.
 
@@ -163,6 +171,10 @@ These questions bridge the gap between the model and the key question. They:
 
 A common failure mode is asking students to just restate something they can read directly off the model. A better invention question asks them to **compare**, **infer**, **predict**, or **explain why** — operations that require putting the observations together.
 
+**Test every candidate question for busywork before proposing it.** Ask: what does a team have to *infer* to answer this? If the honest answer is "nothing, they copy it" — writing out a table's final contents, listing the rows that were changed, restating a definition from the model — cut it, or rework it until it requires an inference. Propose a transcription task only when producing it forces a decision (e.g., writing the table after a sequence of operations where some are rejected, so the team must decide which ones took effect).
+
+**One question per number.** Each numbered question asks for one thing. Never join two asks ("Which column allows NULL? Which statement inserts one?"); a team answers the first, skips the second, and the recorder loses track. Split them into two numbered questions, or cut one. Asking for the reasoning behind the *same* answer is not a second ask and is preferred: "Which part of the statement makes that legal, and why?" Favor questions that make students explain over questions that only make them identify — the explanation is where the process skill develops and where a facilitator can see the team's thinking.
+
 ### Step 8 — Exploration questions
 
 These are the early questions in the sequence — short, directed, easy to answer by reading the model or applying prior knowledge. They orient the team to the model and surface the key features they'll need later.
@@ -173,6 +185,10 @@ Examples:
 - "Which atoms in the structure of glucose are involved in the bond shown in red?"
 
 Aim for 2–4 exploration questions per model. They should be answerable in under a minute each. Roughly 3–10 total questions per model is a healthy range across exploration + invention + application.
+
+**Budget questions against time.** When you draft a model, estimate minutes per question (about one for an orienting question, two to four for an inference, more for writing code or a rule) and add them up against the time the user allotted to that model. If the total runs over, say so plainly and recommend which question to cut — usually one that duplicates an inference another question already forces — rather than letting the activity quietly overrun the class period.
+
+**An optional stretch question may close the last model.** Label it in italics at the start of the question, *Optional, if your team has time.*, and make sure nothing later depends on it. It is numbered like any other question, and is separate from the early-finisher prompt in the Facilitation Notes, which the instructor gives a team that has finished everything.
 
 ### A critical point about Exploration / Invention / Application
 
@@ -215,7 +231,27 @@ Inline placement matters: it lets the author (and any reviewer) read each questi
 Student-team answers:
 - **Must be correct.** Sample answers often end up distributed to students as answer keys, so accuracy matters directly. They also matter during review: if a sample answer is wrong, the author reviewing the activity will think the *question* is broken when it isn't. Never write a deliberately wrong answer to model a misconception. Misconceptions belong in the Facilitation Notes section at the end of the document, where they are labeled as such and accompanied by probing questions for the instructor to ask.
 - May use informal or incomplete phrasing — the goal is to show a credible student-team articulation, not an expert's polished version. "Rate stops going up" is a fine team answer; "rate asymptotically approaches Vmax" is not.
-- For divergent questions, include "(variation expected)" before the sample and give one plausible correct version. If multiple substantively different correct answers exist, list them.
+- For divergent questions, put "(variation expected)" at the start of the **first answer line**, never on the marker line, then give one plausible correct version. If multiple substantively different correct answers exist, list them. The marker line must stay exactly `> ***Sample:***<br>`, because that is what the student script recognizes:
+
+  ```markdown
+  6. Complete the sentence: A column refuses NULL when ___.
+     > ***Sample:***<br>
+     > (variation expected)
+     > something in its declaration says so, like NOT NULL or PRIMARY KEY.
+  ```
+- **When the answer is code** (a query, a program, a statement to write), put the code in a fenced block inside the sample. The fence gives the student a code box, which types in a fixed-width font at single spacing. Prose around the code stays outside the fence:
+
+  ```markdown
+  7. Write two `UPDATE` statements that change the `team_id` of team 1, one rejected and one accepted.
+     > ***Sample:***<br>
+     > (variation expected)
+     > ```sql
+     > UPDATE team SET team_id = 2 WHERE team_id = 1;  -- rejected: team 2 has that id
+     > UPDATE team SET team_id = 9 WHERE team_id = 1;  -- accepted
+     > ```
+  ```
+
+  Use inline backticks instead when code is only mentioned in a prose answer ("B violates UNIQUE on `team_name`"); that answer gets an ordinary box.
 
 ### Step 10 — Review and refine
 
@@ -227,38 +263,58 @@ Walk through this checklist with the user before finalizing:
 - Are the early, orienting questions short and directed?
 - Are the inferential questions truly inferential — requiring students to compare, predict, or explain — not just observational?
 - Is at least one process skill developed by the *structure* of the questions, not just by facilitation?
-- Can a team of 3–4 students plausibly finish the in-class questions in the allotted time?
+- Can a team of 3–4 students plausibly finish the in-class questions in the allotted time? (Add up the per-question estimates; if over, name the question to cut.)
+- Does every numbered question ask exactly one thing, and does each one require an inference rather than transcription?
+- Is numbering global across the models, and do cross-references use those global numbers?
 - Are there 2+ exercises per content objective for practice after class?
 
 Offer to revise any section based on the review.
 
-### Step 11 — Generate the student version
+### Step 11 — Build the Word documents
 
-Once the user has accepted the activity, write the Teacher file to `/mnt/user-data/outputs/<topic-slug>_Teacher.md` (see the Output format section below for naming rules), then run the bundled script to produce the Student file:
+Once the user has accepted the activity, build both deliverables. The **teacher Markdown is the single source**: the student Markdown is derived from it and both Word files are derived from those, so the pipeline is always
 
-```bash
-python scripts/generate_student_version.py /mnt/user-data/outputs/<topic-slug>_Teacher.md
+```
+<slug>_Teacher.md  →  <slug>_Student.md  →  <slug>_Teacher.docx + <slug>_Student.docx
 ```
 
-The script writes the Student file alongside the Teacher file, with `_Teacher.md` replaced by `_Student.md`. It performs four deterministic transformations on the Teacher file:
+Write the Teacher file to `/mnt/user-data/outputs/<slug>_Teacher.md` (see Output format for naming), keep intermediates in a working directory, then run:
 
-1. Drops the entire `# Facilitation Notes` section.
-2. Replaces every sample block with vertical writing space — a series of indented `&nbsp;` lines, **proportional to the sample answer's total length** (roughly one writing line per ~70 characters, with a floor of 2 lines and a ceiling of 8 lines). A sample block is a `> ***Sample:***<br>` marker line followed by one or more `> ` blockquote lines carrying the answer; all are consumed.
-3. Removes the redundant `&nbsp;` separator that followed each sample answer (since the writing space now serves that role).
-4. Inserts a blank line between the question text and the first `&nbsp;` writing line, so the writing space is visually separated from the question.
+```bash
+python scripts/generate_student_version.py /mnt/user-data/outputs/<slug>_Teacher.md <work>/<slug>_Student.md
+node scripts/build_docx.js /mnt/user-data/outputs/<slug>_Teacher.md /mnt/user-data/outputs/<slug>_Teacher.docx
+node scripts/build_docx.js <work>/<slug>_Student.md /mnt/user-data/outputs/<slug>_Student.docx
+```
 
-Everything else is preserved verbatim. Do not try to produce the Student file by paraphrasing the Teacher file — always invoke the script, since it ensures the two files stay in sync. After the script runs, call `present_files` with both filepaths, Teacher first.
+(`build_docx.js` needs the `docx` npm package; run `npm install docx` if `require` fails. It picks teacher or student mode from the filename suffix.)
+
+The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into answer boxes that grow as students type, and prints each teacher sample in a box of the same size, so the two versions line up page for page.
+
+Do not produce either derived file by hand, and do not use a generic Markdown-to-Word converter: it strips the indentation that distinguishes writing space (indented `&nbsp;`) from section separators (un-indented `&nbsp;`), which in one attempt silently removed all of the writing space. Read `references/docx-layout.md` before changing the build script or if a page looks wrong.
+
+**Verify by looking, every time.** Render both Word files to PDF with LibreOffice (in Claude.ai, use the LibreOffice helper script the environment provides; elsewhere `soffice --headless --convert-to pdf --outdir <work> <file>.docx`), rasterize with `pdftoppm -r 60 -png`, and view **every page** of both documents. Page counts and text extraction cannot show a layout problem. Look specifically for:
+
+- a page that is mostly empty;
+- an answer box at the top of a page, separated from its question or prompt;
+- a heading or a lead-in sentence ("Current contents of `team`:") at the foot of a page;
+- a model split from its questions, or a table or code block split across pages.
+
+If a page is ambiguous at that size, render it alone at higher resolution (`pdftoppm -r 100 -f N -l N`). Fix a layout problem in the build script and a content problem (a model that runs past a page) in the teacher Markdown, then rebuild. **Never edit the `.docx` files directly**; they are rebuilt from the Markdown every time. If LibreOffice or `pdftoppm` is unavailable, tell the user the visual check could not be done rather than skipping it silently.
+
+When the pages look right, call `present_files` with the Teacher `.docx`, the Student `.docx`, and the Teacher `.md` (the editable source), in that order.
 
 ## Output format
 
-Two Markdown files in `/mnt/user-data/outputs/`:
+The deliverables are two Word documents in `/mnt/user-data/outputs/`, US Letter, printable without hand-fixing and suitable for uploading to Google Docs:
 
-- `<topic-slug>_Teacher.md` — the authoring/review version. Sample answers inline, facilitation notes at the end. Written by Claude.
-- `<topic-slug>_Student.md` — the student-facing version. Proportional writing space in place of answers, facilitation notes removed. Generated by the bundled script.
+- `<topic-slug>_Teacher.docx` — each sample answer in purple, in a shaded box the same size as the student's; facilitation notes at the end.
+- `<topic-slug>_Student.docx` — an answer box in place of each answer; facilitation notes removed.
+
+Both are built from `<topic-slug>_Teacher.md`, which Claude writes and which stays the single editable, diffable source; deliver it alongside the Word files. All content edits go into the teacher Markdown, followed by a rebuild.
 
 `<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix. (This is a trademark requirement; see the "About the POGIL trademark" section above.)
 
-Four formatting conventions for the Teacher version (the script handles the Student version automatically):
+Formatting conventions for the Teacher Markdown (the scripts handle everything downstream):
 
 1. **No question-category headings.** Under each model is a single numbered list of questions — no `### Exploration` / `### Concept invention` / `### Application` subheadings. (See the "*A critical point about Exploration / Invention / Application*" subsection earlier for why.)
 2. **Sample answers inline, bold-italic label on its own line.** Every question is followed immediately by its sample answer, formatted as a two-part blockquote: a marker line (`> ***Sample:***<br>`) and the answer text on the line(s) below:
@@ -271,6 +327,8 @@ Four formatting conventions for the Teacher version (the script handles the Stud
 
 3. **Vertical breathing room after every question.** The `&nbsp;` separator belongs to the question above it (it is the question's trailing breathing room), not to the gap between questions. Indent it to match the indentation of the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This rule applies to **every** numbered item, including the last question of each model (before the next `## Model` heading) and the last exercise (before `## Problem`). Also insert an un-indented `&nbsp;` between each model's content (table, diagram, code block, etc.) and the first question, so the questions are visually set apart from the model they reference.
 4. **No `---` horizontal rules between sections.** Use a standalone `&nbsp;` line instead. VS Code and GitHub already render a horizontal rule visually after level-1 and level-2 headings, so an explicit `---` produces a doubled rule that hurts readability. The `&nbsp;` just inserts a blank line of breathing room.
+5. **Global question numbering.** Number questions continuously across the whole activity: if Model 1 ends at question 7, Model 2 begins at 8. Cross-references always use the global number ("Using your answers to questions 9 through 12…"), so a question number identifies one question anywhere in the document and in class discussion. Exercises are numbered separately, starting from 1 under their own heading. Write each number literally (`8.`, not `1.` relying on auto-numbering); the build script keeps numbers exactly as written.
+6. **Model headings start with `## Model N:`** and the facilitation section with `# Facilitation Notes`. The build script starts a new page at exactly these headings.
 
 Here is the Teacher template:
 
@@ -278,8 +336,8 @@ Here is the Teacher template:
 # [Activity Title — topic-focused; do not include the word "POGIL"]
 
 ## Why?
-[1–3 sentences motivating the activity for students. Connects to what they've learned
-and what's coming. Optional — instructors often provide this aloud at the start of class.]
+[Two sentences motivating the activity for students: why this matters to them, and what
+they will be able to do by the end. Connects to what they've learned and what's coming.]
 
 ## Prerequisites
 - [Prior knowledge / skills students need]
@@ -322,7 +380,8 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
 4. [The key question — often phrased as "in your own words, describe…" or "complete this statement…". This is where new terminology gets introduced or articulated.]
    > ***Sample:***<br>
-   > [Answer; for open phrasing, note "(variation expected)" and give one plausible version.]
+   > (variation expected)
+   > [One plausible version of the answer.]
 
    &nbsp;
 
@@ -332,15 +391,30 @@ and what's coming. Optional — instructors often provide this aloud at the star
 
    &nbsp;
 
-## Model 2: [Descriptive title]
+## Model 2: [Title continuing the story — the same situation, extended]
 
-[Repeat the inline-answer structure for each learning cycle. Typically 2–3 cycles total per 45–50 minute class.]
+[Repeat the inline-answer structure for each learning cycle. Typically 2–3 cycles total per 45–50 minute class. Numbering continues from Model 1.]
+
+&nbsp;
+
+6. [First question of Model 2 — numbering continues globally.]
+   > ***Sample:***<br>
+   > [Answer.]
+
+   &nbsp;
+
+[7., 8., … — continue the sequence.]
+
+9. *Optional, if your team has time.* [Optional stretch question closing the last model; nothing depends on it.]
+   > ***Sample:***<br>
+   > (variation expected)
+   > [Answer.]
 
    &nbsp;
 
 ## Exercises
 
-[2+ per content objective. Variations on the application questions for practice after class. Use the same inline-answer format with `&nbsp;` separators between items.]
+[2+ per content objective. Variations on the application questions for practice after class. Numbered from 1, separately from the model questions. Use the same inline-answer format with `&nbsp;` separators between items.]
 
 1. [Exercise]
    > ***Sample:***<br>
@@ -382,10 +456,10 @@ and what's coming. Optional — instructors often provide this aloud at the star
 - [Same structure]
 
 ## If a team finishes early
-- [A stretch question or extension that prepares for the next class]
+- [A prompt the instructor gives a team that has finished everything, including any optional question; often sets up the next class]
 ```
 
-After both files are written, briefly summarize what's in the activity and offer to revise any section. If the user requests changes, edit the Teacher file and re-run the script to regenerate the Student file.
+After the files are built and checked, briefly summarize what's in the activity and offer to revise any section. If the user requests changes, edit the Teacher Markdown and re-run the whole pipeline in Step 11, including the visual check.
 
 ## A few important nuances
 
