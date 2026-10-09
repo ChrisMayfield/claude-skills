@@ -294,7 +294,7 @@ node <skill>/scripts/build_docx.js <work>/<slug>_Student.md <out>/<slug>_Student
 
 (`build_docx.js` picks teacher or student mode from the filename suffix. It needs the `docx` npm package. If `require` fails, install the package without adding files to the user's folder: `npm install --prefix <work> docx`, then rerun with `NODE_PATH=<work>/node_modules`. If installation isn't possible, for example with no network access, tell the user the Word files could not be built and deliver the teacher Markdown.)
 
-The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into answer boxes that grow as students type, and prints each teacher sample in a box of the same size, so the two versions line up page for page.
+The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into answer boxes: blank space when printed, with a fixed height so typed answers cannot reflow the page. It prints each teacher sample in a box of the same size, so the two versions line up page for page. Both documents meet WCAG 2.1 AA (color contrast, heading styles, document title and language, image alt text), so give every image meaningful alt text.
 
 Do not produce either derived file by hand, and do not use a generic Markdown-to-Word converter: it strips the indentation that distinguishes writing space (indented `&nbsp;`) from section separators (un-indented `&nbsp;`), which in one attempt silently removed all of the writing space. Read `<skill>/references/docx-layout.md` before changing the build script or if a page looks wrong.
 
@@ -303,7 +303,8 @@ Do not produce either derived file by hand, and do not use a generic Markdown-to
 - a page that is mostly empty;
 - an answer box at the top of a page, separated from its question or prompt;
 - a heading or a lead-in sentence ("Current contents of `team`:") at the foot of a page;
-- a model split from its questions, or a table or code block split across pages.
+- a model split from its questions, or a table or code block split across pages;
+- a teacher sample cut off at the bottom of its box. Boxes are a fixed size in both versions, so a sample longer than estimated is clipped, not enlarged. Add an empty `>` line at the end of that sample in the teacher Markdown for each missing line; it adds a line to both versions' boxes. Then regenerate the student Markdown and rebuild both.
 
 If a page is ambiguous at that size, render it alone at higher resolution (`pdftoppm -r 100 -f N -l N`). Fix a layout problem in the build script and a content problem (a model that runs past a page) in the teacher Markdown, then rebuild. **Never edit the `.docx` files directly**; they are rebuilt from the Markdown every time. If LibreOffice or `pdftoppm` is unavailable, tell the user the visual check could not be done rather than skipping it silently.
 
@@ -313,8 +314,8 @@ When the pages look right, give the user the Teacher `.docx`, the Student `.docx
 
 The deliverables are two Word documents in `<out>` (see Step 11), US Letter, printable without hand-fixing and suitable for uploading to Google Docs:
 
-- `<topic-slug>_Teacher.docx` — each sample answer in purple, in a shaded box the same size as the student's; facilitation notes at the end.
-- `<topic-slug>_Student.docx` — an answer box in place of each answer; facilitation notes removed.
+- `<topic-slug>_Teacher.docx` — each sample answer in blue, in a shaded box the same size as the student's; facilitation notes at the end.
+- `<topic-slug>_Student.docx` — blank space for writing in place of each answer; facilitation notes removed.
 
 Both are built from `<topic-slug>_Teacher.md`, which Claude writes and which stays the single editable, diffable source; deliver it alongside the Word files. All content edits go into the teacher Markdown, followed by a rebuild.
 

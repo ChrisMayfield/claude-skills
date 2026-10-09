@@ -11,13 +11,18 @@ with `_Teacher.md` in the filename replaced by `_Student.md`.
 Transformations:
     1. The `# Facilitation Notes` section (heading and everything after) is dropped.
     2. Every sample block (a `> ***Sample:***<br>` marker line and the `> ` answer
-       lines below it) is replaced with indented `&nbsp;` lines of writing space,
-       as many as the answer is long. A marker line with extra text on it is still
+       lines below it) is replaced with `&nbsp;` lines of writing space, indented
+       like the sample, as many as the answer is long, plus one for each empty `>`
+       line outside a code fence (the author's way to enlarge both boxes). Writing
+       space for an un-indented sample (the Problem) gets an `<!-- answer -->`
+       comment before it, since the Word builder otherwise reads an un-indented
+       `&nbsp;` as a separator. A marker line with extra text on it is still
        consumed, with a warning, so the answer cannot leak. A sample containing a
        fenced code block gets an `<!-- answer: code -->` comment before its writing
        space, which makes its Word answer box monospace.
     3. The `&nbsp;` separator that followed each sample is removed.
-    4. A blank line is inserted between the question text and the writing space.
+    4. A blank line is inserted between the question text and the writing space,
+       unless one is already there.
     5. Any other indented `&nbsp;` is un-indented, so the Word builder treats it as
        a separator rather than writing space.
 
@@ -57,11 +62,10 @@ def writing_lines_for(sample_text: str, rendered_lines: int = 0) -> int:
 SAMPLE_MARKER = re.compile(r"^(\s*)>\s*(.*?)\*\*\*Sample\b[^*]*\*\*\*(.*?)\s*$")
 CANONICAL_MARKER = re.compile(r"^\s*> \*\*\*Sample:\*\*\*<br>\s*$")
 
-# Marks writing space for a code answer; invisible when the Markdown is rendered.
+# Mark writing space for a code answer, and un-indented writing space that would
+# otherwise read as separators; invisible when the Markdown is rendered.
 CODE_ANSWER_MARKER = "<!-- answer: code -->"
-
-# Indentation for writing space under an un-indented sample.
-DEFAULT_WRITING_INDENT = "   "
+ANSWER_MARKER = "<!-- answer -->"
 
 
 def generate_student(teacher_text: str) -> str:
@@ -80,7 +84,7 @@ def generate_student(teacher_text: str) -> str:
         # 2 & 3. Replace the sample with writing space; drop its separator.
         sample_match = SAMPLE_MARKER.match(line)
         if sample_match:
-            indent = sample_match.group(1) or DEFAULT_WRITING_INDENT
+            indent = sample_match.group(1)
             extra = (sample_match.group(2) + " " + sample_match.group(3)).replace("<br>", "")
             sample_text = ""
             if not CANONICAL_MARKER.match(line):
@@ -97,6 +101,7 @@ def generate_student(teacher_text: str) -> str:
             is_code = False
             in_fence = False
             rendered = 0
+            extra_lines = 0
             while i < len(lines) and re.match(r"^\s*>", lines[i]):
                 content = lines[i].lstrip().lstrip(">").strip()
                 if content.startswith("```"):
@@ -104,13 +109,18 @@ def generate_student(teacher_text: str) -> str:
                     in_fence = not in_fence
                 elif in_fence or content:
                     rendered += max(1, -(-len(content) // WRAP_CHARS))
+                else:
+                    extra_lines += 1
                 sample_text += " " + content
                 i += 1
 
-            n = writing_lines_for(sample_text, rendered)
-            out.append("")  # blank line between question text and writing space
+            n = writing_lines_for(sample_text, rendered) + extra_lines
+            if out and out[-1].strip():
+                out.append("")  # blank line between question text and writing space
             if is_code:
                 out.append(f"{indent}{CODE_ANSWER_MARKER}")
+            elif not indent:
+                out.append(ANSWER_MARKER)
             for k in range(n):
                 out.append(f"{indent}&nbsp;")
                 if k < n - 1:

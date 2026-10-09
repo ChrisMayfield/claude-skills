@@ -33,8 +33,10 @@ Once installed, start with a request such as:
 
 The skill will walk you through the backward-design steps, checking in with you at each stage, and finish by producing two Word documents, ready to print or to upload to Google Docs for students to type into:
 
-- **`<topic>_Teacher.docx`** — each sample answer in purple, in a shaded box the same size as the student's answer box (so both versions line up page for page), plus facilitation notes at the end.
-- **`<topic>_Student.docx`** — the same activity with answers replaced by answer boxes (sized to the expected answer, growing as students type, monospace for code) and facilitation notes removed.
+- **`<topic>_Teacher.docx`** — each sample answer in blue, in a shaded box the same size as the student's answer box (so both versions line up page for page), plus facilitation notes at the end.
+- **`<topic>_Student.docx`** — the same activity with answers replaced by blank space for writing (sized to the expected answer, monospace for code) and facilitation notes removed. The space is a fixed-size invisible box, so students can also type answers in Word without breaking the page layout; typed answers appear in blue, like the teacher's samples, to set them apart from the questions.
+
+Both documents use Calibri 11pt and meet WCAG 2.1 AA accessibility requirements, including 4.5:1 minimum contrast for all text.
 
 Both are built from a single editable source, **`<topic>_Teacher.md`**, which is delivered alongside them. The bundled [generate_student_version.py](scripts/generate_student_version.py) derives the student Markdown from it, and [build_docx.js](scripts/build_docx.js) (Node, using the `docx` package) converts both to Word. To revise an activity, edit the teacher Markdown and rebuild; never edit the Word files by hand.
 
