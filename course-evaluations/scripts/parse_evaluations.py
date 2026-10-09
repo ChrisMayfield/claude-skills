@@ -521,7 +521,7 @@ def main():
     parser.add_argument("files", nargs="+", help="CSV file paths (globs OK)")
     parser.add_argument(
         "--enrollment", metavar="JSON",
-        help="Optional JSON file mapping SubjectID to enrolled student count"
+        help='Optional JSON file mapping "Term:SubjectID" to enrolled student count'
     )
     args = parser.parse_args()
 
