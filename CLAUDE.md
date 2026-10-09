@@ -45,7 +45,7 @@ Use `python3`, not `python`. Install missing packages outside the user's folder:
 ## Current skills
 
 - **`course-evaluations/`** — Analyzes JMU student course evaluation CSVs. Produces formative reports (single semester/year) or longitudinal evidence documents (multi-year, for promotion/tenure). Implemented in `scripts/parse_evaluations.py`.
-- **`pogil-activity-writer/`** — Collaboratively authors guided inquiry activities following POGIL (Process Oriented Guided Inquiry Learning) pedagogy. Walks users through backward design and produces teacher and student Word documents from a single teacher Markdown source. Drafts are never called "POGIL activities" (a trademark reserved for endorsed materials), and "pogil" stays out of titles and output filenames. Implemented in `scripts/generate_student_version.py` (student Markdown) and `scripts/build_docx.js` (Word output).
+- **`pogil-activity-writer/`** — Collaboratively authors guided inquiry activities following POGIL (Process Oriented Guided Inquiry Learning) pedagogy. Walks users through backward design and produces teacher and student Word documents from a single teacher Markdown source. Drafts are never called "POGIL activities" (a trademark reserved for endorsed materials), and "pogil" stays out of titles and output filenames. Implemented in `scripts/build_docx.js`, which builds both Word documents from the teacher Markdown.
 
 ## Adding a new skill
 

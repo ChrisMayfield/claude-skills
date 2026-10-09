@@ -201,14 +201,14 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with two parts: a marker line (`> ***Sample:***<br>`) carrying nothing but the label, and one or more blockquote lines below it carrying the answer text. Follow every question with an indented `&nbsp;` line as trailing breathing room (see convention #3 under Output format). This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with two parts: a marker line (`> ***Sample:***<br>`) carrying nothing but the label, and one or more blockquote lines below it carrying the answer text. Follow every question with an `&nbsp;` line (see convention #3 under Output format). This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
    > ***Sample:***<br>
    > About 1.15×. Rate goes from 33.3 to 38.5 — barely any change despite the big jump in [S].
 
-   &nbsp;
+&nbsp;
 
 4. The next question goes here.
    > ***Sample:***<br>
@@ -229,7 +229,7 @@ Inline placement matters: it lets the author (and any reviewer) read each questi
 Student-team answers:
 - **Must be correct.** Sample answers often end up distributed to students as answer keys, so accuracy matters directly. They also matter during review: if a sample answer is wrong, the author reviewing the activity will think the *question* is broken when it isn't. Never write a deliberately wrong answer to model a misconception. Misconceptions belong in the Facilitation Notes section at the end of the document, where they are labeled as such and accompanied by probing questions for the instructor to ask.
 - May use informal or incomplete phrasing — the goal is to show a credible student-team articulation, not an expert's polished version. "Rate stops going up" is a fine team answer; "rate asymptotically approaches Vmax" is not.
-- For divergent questions, put "(variation expected)" at the start of the **first answer line**, never on the marker line, then give one plausible correct version. If multiple substantively different correct answers exist, list them. The marker line must stay exactly `> ***Sample:***<br>`, because that is what the student script recognizes:
+- For divergent questions, put "(variation expected)" at the start of the **first answer line**, never on the marker line, then give one plausible correct version. If multiple substantively different correct answers exist, list them. The marker line must stay exactly `> ***Sample:***<br>`, because that is what the build script recognizes:
 
   ```markdown
   6. Complete the sentence: A column refuses NULL when ___.
@@ -270,31 +270,25 @@ Offer to revise any section based on the review.
 
 ### Step 11 — Build the Word documents
 
-Once the user has accepted the activity, build both deliverables. The **teacher Markdown is the single source**: the student Markdown is derived from it and both Word files are derived from those, so the pipeline is always
-
-```
-<slug>_Teacher.md  →  <slug>_Student.md  →  <slug>_Teacher.docx + <slug>_Student.docx
-```
+Once the user has accepted the activity, build both deliverables. The **teacher Markdown is the single source**: one script builds both Word files from it.
 
 Paths in this step:
 
 - `<skill>` is this skill's own directory (the one containing this `SKILL.md`). Run the bundled scripts by their full path, `<skill>/scripts/...`, since the working directory is usually somewhere else.
 - `<out>` is where the user receives files. In Claude.ai, that is `/mnt/user-data/outputs/`. In Claude Code or another local agent, use the current working directory unless the user names another folder. Elsewhere, use whatever location the platform offers for downloadable files.
-- `<work>` is a scratch directory for intermediates (the student Markdown, PDFs, page images). Use the platform's scratch or temp directory, not `<out>`, so the user's folder holds only the deliverables.
+- `<work>` is a scratch directory for intermediates (PDFs, page images). Use the platform's scratch or temp directory, not `<out>`, so the user's folder holds only the deliverables.
 
 Write the teacher file to `<out>/<slug>_Teacher.md` (see Output format for naming), then run:
 
 ```bash
-python3 <skill>/scripts/generate_student_version.py <out>/<slug>_Teacher.md <work>/<slug>_Student.md
-node <skill>/scripts/build_docx.js <out>/<slug>_Teacher.md <out>/<slug>_Teacher.docx
-node <skill>/scripts/build_docx.js <work>/<slug>_Student.md <out>/<slug>_Student.docx
+node <skill>/scripts/build_docx.js <out>/<slug>_Teacher.md
 ```
 
-(`build_docx.js` picks teacher or student mode from the filename suffix. It needs the `docx` npm package. If `require` fails, install the package without adding files to the user's folder: `npm install --prefix <work> docx`, then rerun with `NODE_PATH=<work>/node_modules`. If installation isn't possible, for example with no network access, tell the user the Word files could not be built and deliver the teacher Markdown.)
+(This writes `<slug>_Teacher.docx` and `<slug>_Student.docx` next to the input; a second argument names another output directory. The script needs the `docx` npm package. If `require` fails, install the package without adding files to the user's folder: `npm install --prefix <work> docx`, then rerun with `NODE_PATH=<work>/node_modules`. If installation isn't possible, for example with no network access, tell the user the Word files could not be built and deliver the teacher Markdown.)
 
-The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into fixed-height answer boxes, blank when printed, and prints each teacher sample in a box of the same size, so the two versions line up page for page. Both documents meet WCAG 2.1 AA, so give every image meaningful alt text.
+Each sample becomes a fixed-height answer box sized to the answer: the teacher version prints the sample in it, and the student version leaves it blank and drops the Facilitation Notes, so the two line up page for page. Both documents meet WCAG 2.1 AA, so give every image meaningful alt text.
 
-Do not produce either derived file by hand, and do not use a generic Markdown-to-Word converter: it strips the indentation that distinguishes writing space (indented `&nbsp;`) from section separators (un-indented `&nbsp;`), which in one attempt silently removed all of the writing space. Read `<skill>/references/docx-layout.md` before changing the build script or if a page looks wrong.
+Do not produce either Word file by hand or with a generic Markdown-to-Word converter, which knows nothing of answer boxes and would print the samples in the student version. Read `<skill>/references/docx-layout.md` before changing the build script or if a page looks wrong.
 
 **Verify by looking, every time.** Render both Word files to PDF with LibreOffice (`soffice --headless --convert-to pdf --outdir <work> <file>.docx`, or a LibreOffice helper script if the environment provides one), rasterize with `pdftoppm -r 60 -png`, and view **every page** of both documents. Page counts and text extraction cannot show a layout problem. Look specifically for:
 
@@ -302,7 +296,7 @@ Do not produce either derived file by hand, and do not use a generic Markdown-to
 - an answer box at the top of a page, separated from its question or prompt;
 - a heading or a lead-in sentence ("Current contents of `team`:") at the foot of a page;
 - a model split from its questions, or a table or code block split across pages;
-- a teacher sample cut off at the bottom of its box. Boxes are a fixed size in both versions, so a sample longer than estimated is clipped, not enlarged. Add an empty `>` line at the end of that sample in the teacher Markdown for each missing line; it adds a line to both versions' boxes. Then regenerate the student Markdown and rebuild both.
+- a teacher sample cut off at the bottom of its box. Boxes are a fixed size in both versions, so a sample longer than estimated is clipped, not enlarged. Add an empty `>` line at the end of that sample in the teacher Markdown for each missing line; it adds a line to both versions' boxes. Then rebuild.
 
 If a page is ambiguous at that size, render it alone at higher resolution (`pdftoppm -r 100 -f N -l N`). Fix a layout problem in the build script and a content problem (a model that runs past a page) in the teacher Markdown, then rebuild. **Never edit the `.docx` files directly**; they are rebuilt from the Markdown every time. If LibreOffice or `pdftoppm` is unavailable, tell the user the visual check could not be done rather than skipping it silently.
 
@@ -319,12 +313,12 @@ Both are built from `<slug>_Teacher.md`, the single editable source, which is de
 
 `<slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`), with no "pogil" or "activity" (see "About the POGIL trademark").
 
-Formatting conventions for the teacher Markdown (the scripts handle everything downstream):
+Formatting conventions for the teacher Markdown (the build script handles everything downstream):
 
 1. **No question-category headings.** Under each model is a single numbered list of questions — no `### Exploration` / `### Concept invention` / `### Application` subheadings (see "A critical point about Exploration / Invention / Application").
 2. **Sample answers inline.** Every question is followed immediately by its sample answer: the exact marker line `> ***Sample:***<br>`, then the answer on the `> ` line(s) below (see Step 9).
-3. **An `&nbsp;` line after every question.** It belongs to the question above it, so indent it to match the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This applies to **every** numbered item, including the last question of each model and the last exercise. Also put an un-indented `&nbsp;` between each model's content (table, diagram, code block, etc.) and its first question.
-4. **No `---` horizontal rules between sections.** Use a standalone un-indented `&nbsp;` line instead; GitHub and VS Code already draw a rule under level-1 and level-2 headings, so `---` doubles it.
+3. **An `&nbsp;` line after every question**, including the last question of each model and the last exercise, and between each model's content (table, diagram, code block, etc.) and its first question. It keeps the Markdown readable; the Word build replaces the one after a sample with the answer box's own spacing.
+4. **No `---` horizontal rules between sections.** Use a standalone `&nbsp;` line instead; GitHub and VS Code already draw a rule under level-1 and level-2 headings, so `---` doubles it.
 5. **Global question numbering.** Number questions continuously across the whole activity: if Model 1 ends at question 7, Model 2 begins at 8. Cross-references always use the global number ("Using your answers to questions 9 through 12…"), so a question number identifies one question anywhere in the document and in class discussion. Exercises are numbered separately, starting from 1 under their own heading. Write each number literally (`8.`, not `1.` relying on auto-numbering); the build script keeps numbers exactly as written.
 6. **Model headings start with `## Model N:`** and the facilitation section with `# Facilitation Notes`. The build script starts a new page at exactly these headings.
 
@@ -362,32 +356,32 @@ they will be able to do by the end. Connects to what they've learned and what's 
    > ***Sample:***<br>
    > [Student-team-voice answer.]
 
-   &nbsp;
+&nbsp;
 
 2. [Next question — could be another orienting question, or could be an inference depending on what the sequence needs]
    > ***Sample:***<br>
    > [Answer.]
 
-   &nbsp;
+&nbsp;
 
 3. [Continue sequencing — let the questions follow the natural arc from observation toward the concept, weaving in further orienting questions if a team needs to look at a specific feature mid-sequence]
    > ***Sample:***<br>
    > [Answer.]
 
-   &nbsp;
+&nbsp;
 
 4. [The key question — often phrased as "in your own words, describe…" or "complete this statement…". This is where new terminology gets introduced or articulated.]
    > ***Sample:***<br>
    > (variation expected)
    > [One plausible version of the answer.]
 
-   &nbsp;
+&nbsp;
 
 5. [Application question — apply the just-developed concept to a fresh case.]
    > ***Sample:***<br>
    > [Answer with the justification students should give.]
 
-   &nbsp;
+&nbsp;
 
 ## Model 2: [Title continuing the story — the same situation, extended]
 
@@ -399,7 +393,7 @@ they will be able to do by the end. Connects to what they've learned and what's 
    > ***Sample:***<br>
    > [Answer.]
 
-   &nbsp;
+&nbsp;
 
 [7., 8., … — continue the sequence.]
 
@@ -408,23 +402,23 @@ they will be able to do by the end. Connects to what they've learned and what's 
    > (variation expected)
    > [Answer.]
 
-   &nbsp;
+&nbsp;
 
 ## Exercises
 
-[2+ per content objective. Variations on the application questions for practice after class. Numbered from 1, separately from the model questions. Use the same inline-answer format with `&nbsp;` separators between items.]
+[2+ per content objective. Variations on the application questions for practice after class. Numbered from 1, separately from the model questions. Use the same inline-answer format.]
 
 1. [Exercise]
    > ***Sample:***<br>
    > [Answer.]
 
-   &nbsp;
+&nbsp;
 
 2. [Exercise]
    > ***Sample:***<br>
    > [Answer.]
 
-   &nbsp;
+&nbsp;
 
 ## Problem (optional)
 

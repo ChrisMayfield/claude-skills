@@ -1,12 +1,14 @@
 #!/usr/bin/env node
-// Build a Word version of an activity from its Markdown source, for printing or
-// for uploading to Google Docs so students can type their answers.
+// Build the teacher and student Word versions of an activity from its teacher
+// Markdown, for printing or for uploading to Google Docs so students can type
+// their answers.
 //
 // Usage:
-//     node build_docx.js <input.md> <output.docx> [--teacher | --student]
+//     node build_docx.js <slug>_Teacher.md [<output-dir>]
 //
-// The mode comes from the input filename (`_Teacher.md` or `_Student.md`) unless a
-// flag overrides it. Requires the `docx` npm package.
+// Writes <slug>_Teacher.docx and <slug>_Student.docx to the output directory
+// (default: the input's directory). The student version leaves each answer box
+// empty and drops the Facilitation Notes. Requires the `docx` npm package.
 //
 // This is a purpose-built reader for the Markdown this skill writes, not a general
 // parser. The reasons behind its layout rules are in references/docx-layout.md.
@@ -69,13 +71,14 @@ function spaceBefore(line) {
   return 40;
 }
 
-// Box sizing. These constants and writingLinesFor() must stay in step with
-// writing_lines_for() in generate_student_version.py.
+// Box sizing: the number of lines of writing space to leave for a sample.
 const CHARS_PER_LINE = 70;
 const MIN_WRITING_LINES = 2;
 const MAX_WRITING_LINES = 8;
 const WRAP_CHARS = 90;
 
+// Proportional to the sample's length, clamped, but never fewer than the lines
+// the sample wraps to when printed, so the teacher sample fits its box.
 function writingLinesFor(sampleText, renderedLines) {
   const estimated = sampleText.trim()
     ? Math.floor(sampleText.length / CHARS_PER_LINE) + 1
@@ -84,7 +87,8 @@ function writingLinesFor(sampleText, renderedLines) {
   return Math.max(clamped, renderedLines);
 }
 
-// The sample marker, matched as tolerantly as the student script matches it.
+// The sample marker. Anything else on the line (a stray "(variation expected)", a
+// missing <br>) is tolerated with a warning, so the answer cannot leak.
 const SAMPLE_MARKER = /^(\s*)>\s*(.*?)\*\*\*Sample\b[^*]*\*\*\*(.*?)\s*$/;
 const CANONICAL_MARKER = /^\s*> \*\*\*Sample:\*\*\*<br>\s*$/;
 
@@ -119,6 +123,13 @@ for (const [fg, bg, min] of [
   [RULE_COLOR, "FFFFFF", 3], [QUOTE_COLOR, "FFFFFF", 3],
 ]) {
   if (contrastRatio(fg, bg) < min) throw new Error(`Contrast of ${fg} on ${bg} is below ${min}:1`);
+}
+
+// Print each warning once, though both versions are built from the same source.
+const warned = new Set();
+function warn(message) {
+  if (!warned.has(message)) console.error(`Warning: ${message}`);
+  warned.add(message);
 }
 
 // ---------------------------------------------------------------- inline runs
@@ -217,12 +228,14 @@ function codeBlock(lines, indented) {
   }));
 }
 
-// Split a sample block into the lines to print, and size its box the way the
-// student script does.
-function parseSample(rawLines) {
+// Split a sample block into the lines to print, and size its box. Each empty `>`
+// line outside a code fence adds a line, the author's way to enlarge a box.
+function parseSample(rawLines, lineNo) {
   const marker = rawLines[0].match(SAMPLE_MARKER);
   let sampleText = "";
   if (!CANONICAL_MARKER.test(rawLines[0])) {
+    warn(`line ${lineNo}: sample marker should be exactly `
+      + `'> ***Sample:***<br>'; move other text to the next line: ${rawLines[0].trim()}`);
     sampleText = " " + `${marker[2]} ${marker[3]}`.replace(/<br>/g, "").trim();
   }
   const items = [];
@@ -431,13 +444,13 @@ function imageSize(buf) {
 function image(file, alt, baseDir) {
   const full = path.resolve(baseDir, file);
   if (!fs.existsSync(full)) {
-    console.error(`Warning: image not found, skipped: ${full}`);
+    warn(`image not found, skipped: ${full}`);
     return null;
   }
   const data = fs.readFileSync(full);
   const size = imageSize(data);
   if (!size) {
-    console.error(`Warning: not a readable PNG or JPEG, skipped: ${full}`);
+    warn(`not a readable PNG or JPEG, skipped: ${full}`);
     return null;
   }
   const maxWidth = 576; // docx-js sizes images in pixels at 96 dpi; 6 in = 576 px
@@ -460,11 +473,8 @@ function image(file, alt, baseDir) {
 
 // --------------------------------------------------------------------- parser
 
-const WRITING = /^\s+&nbsp;\s*$/;
 const NBSP = /^\s*&nbsp;\s*$/;
-const ANSWER = /^\s*<!--\s*answer(:\s*code)?\s*-->\s*$/;
 const COMMENT = /^\s*<!--.*-->\s*$/;
-const SEPARATOR = /^&nbsp;\s*$/;
 const BLOCK_START = /^(\s*```|\s*\||#{1,4}\s|\s*[-*]\s|\s*>|\s*\d+\.\s|\s*[a-z]\.\s|\s*!\[)/;
 
 // The index of the first non-blank line at or after i (lines.length if none).
@@ -478,28 +488,22 @@ function convert(mdPath, student) {
   const baseDir = path.dirname(mdPath);
   const children = [];
   const add = (el) => { if (el) children.push(el); };
-  let mermaidWarned = false;
-  let codeAnswer = false;
-  let answerMarked = false;
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!line.trim()) continue;
     const indented = /^\s/.test(line);
-    // An answer marker applies only to the writing space right after it, so any
-    // other line clears it.
-    const marked = answerMarked;
-    const code = codeAnswer;
-    answerMarked = false;
-    codeAnswer = false;
+    if (/\*\*\*Sample\b/.test(line) && !SAMPLE_MARKER.test(line)) {
+      throw new Error(`line ${i + 1}: a sample label outside a blockquote would print `
+        + `in the student version; start the marker line with '>': ${line.trim()}`);
+    }
+    if (student && /^#\s+Facilitation Notes\b/.test(line)) break;
 
     // Fenced code block (possibly indented under a question)
     const fence = line.match(/^(\s*)```\s*(\w*)/);
     if (fence) {
-      if (fence[2] === "mermaid" && !mermaidWarned) {
-        console.error("Warning: a mermaid block is printed as source text. "
+      if (fence[2] === "mermaid") {
+        warn("a mermaid block is printed as source text. "
           + "Render it to PNG and reference it with ![alt](file.png) instead.");
-        mermaidWarned = true;
       }
       const pad = fence[1].length;
       const buf = [];
@@ -532,29 +536,8 @@ function convert(mdPath, student) {
       continue;
     }
 
-    // Indented &nbsp; is writing space; un-indented is a separator, unless an
-    // answer marker comes first (writing space for an un-indented sample).
-    if (WRITING.test(line) || (marked && NBSP.test(line))) {
-      if (student) {
-        const pad = line.match(/^\s*/)[0];
-        let count = 1;
-        let j = nextLine(lines, i + 1);
-        while (j < lines.length && NBSP.test(lines[j]) && lines[j].match(/^\s*/)[0] === pad) {
-          count++;
-          j = nextLine(lines, j + 1);
-        }
-        i = j - 1;
-        answerBox(count, code, undefined, indented, lines[j]).forEach(add);
-      } else {
-        // Matches the student script, which un-indents these into separators.
-        add(spacer());
-      }
-      continue;
-    }
-    const marker = line.match(ANSWER);
-    if (marker) { answerMarked = true; codeAnswer = Boolean(marker[1]); continue; }
     if (COMMENT.test(line)) continue;
-    if (SEPARATOR.test(line)) {
+    if (NBSP.test(line)) {
       add(spacer());
       continue;
     }
@@ -562,24 +545,25 @@ function convert(mdPath, student) {
     // Image on its own line
     const img = line.match(/^\s*!\[([^\]]*)\]\(([^)\s]+)[^)]*\)\s*$/);
     if (img) {
-      if (!img[1].trim()) console.error(`Warning: image has no alt text: ${img[2]}`);
+      if (!img[1].trim()) warn(`image has no alt text: ${img[2]}`);
       add(image(img[2], img[1].trim(), baseDir));
       continue;
     }
 
-    // Blockquote: a sample answer (teacher version) or an ordinary quotation
+    // Blockquote: a sample answer or an ordinary quotation
     if (/^\s*>/.test(line)) {
+      const start = i + 1;
       const raw = [];
       while (i < lines.length && /^\s*>/.test(lines[i])) raw.push(lines[i++]);
       i--;
       if (SAMPLE_MARKER.test(raw[0])) {
-        const sample = parseSample(raw);
-        // Skip the separator after the sample, as the student script does.
+        const sample = parseSample(raw, start);
+        // The box replaces the separator after the sample.
         const j = nextLine(lines, i + 1);
         if (j < lines.length && NBSP.test(lines[j])) i = j;
         const next = lines[nextLine(lines, i + 1)];
-        answerBox(sample.lines, sample.code, sampleParagraphs(sample.items), indented, next)
-          .forEach(add);
+        const contents = student ? undefined : sampleParagraphs(sample.items);
+        answerBox(sample.lines, sample.code, contents, indented, next).forEach(add);
       } else {
         quoteBlock(raw.map((t) => t.replace(/^\s*>\s?/, "")), indented).forEach(add);
       }
@@ -610,7 +594,7 @@ function convert(mdPath, student) {
     // A paragraph introduces what follows it, so it keeps with it unless a
     // separator or heading comes next.
     const k = nextLine(lines, i + 1);
-    const endsSection = k >= lines.length || SEPARATOR.test(lines[k]) || /^#{1,4}\s/.test(lines[k]);
+    const endsSection = k >= lines.length || NBSP.test(lines[k]) || /^#{1,4}\s/.test(lines[k]);
     add(para(buf.join(" "), {
       indent: indented ? BODY_INDENT : undefined,
       keepNext: !endsSection,
@@ -660,36 +644,32 @@ function convert(mdPath, student) {
 
 // ----------------------------------------------------------------------- main
 
-function main(argv) {
-  const flags = argv.filter((a) => a.startsWith("--"));
-  const args = argv.filter((a) => !a.startsWith("--"));
-  if (args.length !== 2 || flags.some((f) => f !== "--teacher" && f !== "--student")) {
-    console.error("Usage: node build_docx.js <input.md> <output.docx> [--teacher | --student]");
+async function main(argv) {
+  if (argv.length < 1 || argv.length > 2) {
+    console.error("Usage: node build_docx.js <slug>_Teacher.md [<output-dir>]");
     return 2;
   }
-  const [input, output] = args.map((p) => path.resolve(p));
+  const input = path.resolve(argv[0]);
   if (!fs.existsSync(input)) {
     console.error(`Error: file not found: ${input}`);
     return 1;
   }
-
-  let student;
-  if (flags.includes("--student")) student = true;
-  else if (flags.includes("--teacher")) student = false;
-  else if (/_Student\.md$/.test(input)) student = true;
-  else if (/_Teacher\.md$/.test(input)) student = false;
-  else {
-    console.error("Error: cannot tell teacher from student by filename; pass --teacher or --student.");
+  if (!input.endsWith("_Teacher.md")) {
+    console.error(`Error: expected a filename ending in '_Teacher.md', got: ${path.basename(input)}`);
     return 1;
   }
-
-  const doc = convert(input, student);
-  return Packer.toBuffer(doc).then((buf) => {
-    fs.mkdirSync(path.dirname(output), { recursive: true });
-    fs.writeFileSync(output, buf);
+  const outDir = path.resolve(argv[1] ?? path.dirname(input));
+  const slug = path.basename(input).slice(0, -"_Teacher.md".length);
+  fs.mkdirSync(outDir, { recursive: true });
+  for (const [role, student] of [["Teacher", false], ["Student", true]]) {
+    const output = path.join(outDir, `${slug}_${role}.docx`);
+    fs.writeFileSync(output, await Packer.toBuffer(convert(input, student)));
     console.log(`Wrote: ${output}`);
-    return 0;
-  });
+  }
+  return 0;
 }
 
-Promise.resolve(main(process.argv.slice(2))).then((code) => { process.exitCode = code; });
+main(process.argv.slice(2)).then(
+  (code) => { process.exitCode = code; },
+  (err) => { console.error(`Error: ${err.message}`); process.exitCode = 1; },
+);

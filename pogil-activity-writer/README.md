@@ -38,13 +38,13 @@ The skill will walk you through the backward-design steps, checking in with you 
 
 Both documents use Calibri 11pt and meet WCAG 2.1 AA accessibility requirements, including 4.5:1 minimum contrast for all text.
 
-Both are built from a single editable source, **`<topic>_Teacher.md`**, which is delivered alongside them. The bundled [generate_student_version.py](scripts/generate_student_version.py) derives the student Markdown from it, and [build_docx.js](scripts/build_docx.js) (Node, using the `docx` package) converts both to Word. To revise an activity, edit the teacher Markdown and rebuild; never edit the Word files by hand.
+Both are built from a single editable source, **`<topic>_Teacher.md`**, which is delivered alongside them. The bundled [build_docx.js](scripts/build_docx.js) (Node, using the `docx` package) builds both Word files from it. To revise an activity, edit the teacher Markdown and rebuild; never edit the Word files by hand.
 
 ## Installation
 
 Download the prebuilt skill package here: **[pogil-activity-writer.zip](https://github.com/ChrisMayfield/claude-skills/releases/download/skills-latest/pogil-activity-writer.zip)** (automatically built from this repository).
 
-The package follows the open [Agent Skills](https://agentskills.io/) format, which Claude, ChatGPT, and Gemini can all import. The conversational backward-design workflow works on every platform. The Word output requires the platform to run the bundled Python and Node scripts. It has been tested in Claude; on other platforms, expect Markdown output or a less faithful conversion.
+The package follows the open [Agent Skills](https://agentskills.io/) format, which Claude, ChatGPT, and Gemini can all import. The conversational backward-design workflow works on every platform. The Word output requires the platform to run the bundled Node script. It has been tested in Claude; on other platforms, expect Markdown output or a less faithful conversion.
 
 ### Claude
 
@@ -56,7 +56,7 @@ The package follows the open [Agent Skills](https://agentskills.io/) format, whi
 
 ### Claude Code
 
-Unzip the package into `~/.claude/skills/` (personal) or `.claude/skills/` (project-scoped), so that the path is `.../skills/pogil-activity-writer/SKILL.md`. To build and check the Word files locally, you also need Python 3, Node.js with the `docx` package (`npm install docx`), LibreOffice, and `pdftoppm` (from Poppler).
+Unzip the package into `~/.claude/skills/` (personal) or `.claude/skills/` (project-scoped), so that the path is `.../skills/pogil-activity-writer/SKILL.md`. To build and check the Word files locally, you also need Node.js with the `docx` package (`npm install docx`), LibreOffice, and `pdftoppm` (from Poppler).
 
 ### ChatGPT
 
