@@ -69,8 +69,8 @@ The report then uses response rate to judge how reliable each section's feedback
 You can also run [parse_evaluations.py](scripts/parse_evaluations.py) yourself to get the raw tables and comments without a written report. It requires Python 3.10+ and pandas.
 
 ```bash
-python scripts/parse_evaluations.py path/to/*.csv
-python scripts/parse_evaluations.py path/to/*.csv --enrollment enrollment.json
+python3 scripts/parse_evaluations.py path/to/*.csv
+python3 scripts/parse_evaluations.py path/to/*.csv --enrollment enrollment.json
 ```
 
 Output goes to stdout in three parts: the per-section means table, the per-course summary table, and all Q15 (strengths) and Q16 (improvements) comments grouped by section. Warnings, such as missing columns or enrollment keys that were not found, go to stderr.

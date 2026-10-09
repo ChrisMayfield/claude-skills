@@ -4,9 +4,9 @@ parse_evaluations.py — Ingest one or more course-evaluation CSVs and print
 a means table plus a grouped dump of open-text comments.
 
 Usage:
-    python parse_evaluations.py FILE [FILE ...]
-    python parse_evaluations.py /mnt/user-data/uploads/*.csv
-    python parse_evaluations.py /mnt/user-data/uploads/*.csv --enrollment enrollment.json
+    python3 parse_evaluations.py FILE [FILE ...]
+    python3 parse_evaluations.py path/to/*.csv
+    python3 parse_evaluations.py path/to/*.csv --enrollment enrollment.json
 
 The optional --enrollment file is a JSON object mapping "TERM:SubjectID"
 to the number of students enrolled at end of term ("Course Audience" in the

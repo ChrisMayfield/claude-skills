@@ -23,7 +23,7 @@ These constraints apply to **both modes**. In all reports, frame findings around
 
 ## Getting started (user reference)
 
-If no CSV files are attached when this skill is invoked, present this section to the user and stop — do not attempt to run the script.
+If no CSV files are provided when this skill is invoked (attached, or named by path), present this section to the user and stop — do not attempt to run the script.
 
 ---
 
@@ -126,30 +126,41 @@ The script derives each section's semester from the modal `FilloutDate` timestam
 
 ## Workflow
 
-**Before anything else:** if no CSV files (or zip archive) are present in the uploads, present the Getting started section to the user and stop.
+**Before anything else:** if no CSV files (or zip archive) have been provided, either as uploads or as paths the user named, present the Getting started section to the user and stop.
 
 ### 1. Read the inputs
 
-Run the provided script to ingest all uploaded CSVs. First check whether a zip archive or JSON enrollment file was uploaded:
+Run the provided script to ingest all of the CSVs. Paths in this step:
+
+- `<skill>` is this skill's own directory (the one containing this `SKILL.md`). Run the script by its full path, `<skill>/scripts/parse_evaluations.py`, since the working directory is usually somewhere else.
+- `<in>` is the folder holding the user's files. In Claude.ai, uploads are in `/mnt/user-data/uploads/`. In Claude Code or another local agent, use the files or folder the user named, and ask if they didn't name any. Elsewhere, use wherever the platform puts uploaded files.
+- `<work>` is a scratch directory for unzipped files. Use the platform's scratch or temp directory, never `<in>`, so the user's folder is left unchanged.
+
+First check whether a zip archive or JSON enrollment file was provided:
 
 ```bash
+IN=<in>
+WORK=<work>
+
 # Unzip archive if present (Mode B users may upload a zip due to the 20-file limit)
-ZIP=$(ls /mnt/user-data/uploads/*.zip 2>/dev/null | head -1)
+ZIP=$(ls "$IN"/*.zip 2>/dev/null | head -1)
 if [ -n "$ZIP" ]; then
-    unzip -q "$ZIP" -d /tmp/evals_unzipped
-    CSV_GLOB="/tmp/evals_unzipped/*.csv"
+    unzip -q -o "$ZIP" -d "$WORK/evals_unzipped"
+    CSV_GLOB="$WORK/evals_unzipped/*.csv"
 else
-    CSV_GLOB="/mnt/user-data/uploads/*.csv"
+    CSV_GLOB="$IN/*.csv"
 fi
 
 # Auto-detect enrollment file if present
-ENROLLMENT=$(ls /mnt/user-data/uploads/*.json 2>/dev/null | head -1)
+ENROLLMENT=$(ls "$IN"/*.json 2>/dev/null | head -1)
 if [ -n "$ENROLLMENT" ]; then
-    python scripts/parse_evaluations.py $CSV_GLOB --enrollment "$ENROLLMENT"
+    python3 <skill>/scripts/parse_evaluations.py "$CSV_GLOB" --enrollment "$ENROLLMENT"
 else
-    python scripts/parse_evaluations.py $CSV_GLOB
+    python3 <skill>/scripts/parse_evaluations.py "$CSV_GLOB"
 fi
 ```
+
+If the user named individual CSV files rather than a folder, pass those paths to the script directly instead. If the zip holds its CSVs in a subfolder, adjust `CSV_GLOB` to match. The script needs pandas. If the import fails, install it in a virtual environment rather than the system Python, which newer Linux distributions protect: `python3 -m venv <work>/venv && <work>/venv/bin/pip install pandas`, then run the script with `<work>/venv/bin/python` in place of `python3`.
 
 It prints three things to stdout:
 - **Per-section means table** — one row per section with the auto-detected term, scale, N, all Likert means rounded to 2 decimals, and overall ratings. Column headers use short labels: Q3 Clarity, Q4 Prepared, Q5 Respect, Q6 Feedback, Q7 Outside, Q8 Structure, Q9 Assignments, Q10 Materials, Q11 Exams, Q12 Learned, Q13 Instructor, Q14 Course. Use these same labels in the report table. When enrollment data is present, also adds Enrolled and RR% columns and lists sections below the 40% response rate threshold. Use this table in Mode A reports.
