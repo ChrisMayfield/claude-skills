@@ -6,7 +6,8 @@
 //     node build_docx.js <input.md> <output.docx> [--teacher | --student]
 //
 // The mode comes from the input filename (`_Teacher.md` or `_Student.md`) unless a
-// flag overrides it. Requires the `docx` package (npm install docx).
+// flag overrides it. Requires the `docx` package (npm install docx, or install it
+// elsewhere with --prefix and point NODE_PATH at its node_modules).
 //
 // This is a purpose-built reader for the Markdown this skill writes, not a general
 // parser. The reasons behind its layout rules are in references/docx-layout.md.
@@ -18,7 +19,10 @@ let docx;
 try {
   docx = require("docx");
 } catch (e) {
-  console.error("Error: the 'docx' package is not installed. Run: npm install docx");
+  console.error(
+    "Error: the 'docx' package is not installed. Run: npm install --prefix <dir> docx, " +
+    "then rerun with NODE_PATH=<dir>/node_modules"
+  );
   process.exit(1);
 }
 const {

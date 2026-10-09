@@ -278,21 +278,27 @@ Once the user has accepted the activity, build both deliverables. The **teacher 
 <slug>_Teacher.md  →  <slug>_Student.md  →  <slug>_Teacher.docx + <slug>_Student.docx
 ```
 
-Write the Teacher file to `/mnt/user-data/outputs/<slug>_Teacher.md` (see Output format for naming), keep intermediates in a working directory, then run:
+Paths in this step:
+
+- `<skill>` is this skill's own directory (the one containing this `SKILL.md`). Run the bundled scripts by their full path, `<skill>/scripts/...`, since the working directory is usually somewhere else.
+- `<out>` is where the user receives files. In Claude.ai, that is `/mnt/user-data/outputs/`. In Claude Code or another local agent, use the current working directory unless the user names another folder. Elsewhere, use whatever location the platform offers for downloadable files.
+- `<work>` is a scratch directory for intermediates (the student Markdown, PDFs, page images). Use the platform's scratch or temp directory, not `<out>`, so the user's folder holds only the deliverables.
+
+Write the Teacher file to `<out>/<slug>_Teacher.md` (see Output format for naming), then run:
 
 ```bash
-python scripts/generate_student_version.py /mnt/user-data/outputs/<slug>_Teacher.md <work>/<slug>_Student.md
-node scripts/build_docx.js /mnt/user-data/outputs/<slug>_Teacher.md /mnt/user-data/outputs/<slug>_Teacher.docx
-node scripts/build_docx.js <work>/<slug>_Student.md /mnt/user-data/outputs/<slug>_Student.docx
+python3 <skill>/scripts/generate_student_version.py <out>/<slug>_Teacher.md <work>/<slug>_Student.md
+node <skill>/scripts/build_docx.js <out>/<slug>_Teacher.md <out>/<slug>_Teacher.docx
+node <skill>/scripts/build_docx.js <work>/<slug>_Student.md <out>/<slug>_Student.docx
 ```
 
-(`build_docx.js` needs the `docx` npm package; run `npm install docx` if `require` fails. It picks teacher or student mode from the filename suffix.)
+(`build_docx.js` picks teacher or student mode from the filename suffix. It needs the `docx` npm package. If `require` fails, install the package without adding files to the user's folder: `npm install --prefix <work> docx`, then rerun with `NODE_PATH=<work>/node_modules`. If installation isn't possible, for example with no network access, tell the user the Word files could not be built and deliver the teacher Markdown.)
 
 The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into answer boxes that grow as students type, and prints each teacher sample in a box of the same size, so the two versions line up page for page.
 
-Do not produce either derived file by hand, and do not use a generic Markdown-to-Word converter: it strips the indentation that distinguishes writing space (indented `&nbsp;`) from section separators (un-indented `&nbsp;`), which in one attempt silently removed all of the writing space. Read `references/docx-layout.md` before changing the build script or if a page looks wrong.
+Do not produce either derived file by hand, and do not use a generic Markdown-to-Word converter: it strips the indentation that distinguishes writing space (indented `&nbsp;`) from section separators (un-indented `&nbsp;`), which in one attempt silently removed all of the writing space. Read `<skill>/references/docx-layout.md` before changing the build script or if a page looks wrong.
 
-**Verify by looking, every time.** Render both Word files to PDF with LibreOffice (in Claude.ai, use the LibreOffice helper script the environment provides; elsewhere `soffice --headless --convert-to pdf --outdir <work> <file>.docx`), rasterize with `pdftoppm -r 60 -png`, and view **every page** of both documents. Page counts and text extraction cannot show a layout problem. Look specifically for:
+**Verify by looking, every time.** Render both Word files to PDF with LibreOffice (`soffice --headless --convert-to pdf --outdir <work> <file>.docx`, or a LibreOffice helper script if the environment provides one), rasterize with `pdftoppm -r 60 -png`, and view **every page** of both documents. Page counts and text extraction cannot show a layout problem. Look specifically for:
 
 - a page that is mostly empty;
 - an answer box at the top of a page, separated from its question or prompt;
@@ -301,11 +307,11 @@ Do not produce either derived file by hand, and do not use a generic Markdown-to
 
 If a page is ambiguous at that size, render it alone at higher resolution (`pdftoppm -r 100 -f N -l N`). Fix a layout problem in the build script and a content problem (a model that runs past a page) in the teacher Markdown, then rebuild. **Never edit the `.docx` files directly**; they are rebuilt from the Markdown every time. If LibreOffice or `pdftoppm` is unavailable, tell the user the visual check could not be done rather than skipping it silently.
 
-When the pages look right, call `present_files` with the Teacher `.docx`, the Student `.docx`, and the Teacher `.md` (the editable source), in that order.
+When the pages look right, give the user the Teacher `.docx`, the Student `.docx`, and the Teacher `.md` (the editable source), in that order. Use the platform's file-sharing tool if it has one (in Claude.ai, `present_files`); otherwise, list the three paths in `<out>`.
 
 ## Output format
 
-The deliverables are two Word documents in `/mnt/user-data/outputs/`, US Letter, printable without hand-fixing and suitable for uploading to Google Docs:
+The deliverables are two Word documents in `<out>` (see Step 11), US Letter, printable without hand-fixing and suitable for uploading to Google Docs:
 
 - `<topic-slug>_Teacher.docx` — each sample answer in purple, in a shaded box the same size as the student's; facilitation notes at the end.
 - `<topic-slug>_Student.docx` — an answer box in place of each answer; facilitation notes removed.
