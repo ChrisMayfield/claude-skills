@@ -33,7 +33,7 @@ Once installed, start with a request such as:
 
 The skill will walk you through the backward-design steps, checking in with you at each stage, and finish by producing two Word documents, ready to print or to upload to Google Docs for students to type into:
 
-- **`<topic>_Teacher.docx`** — sample answers inline under each question, plus facilitation notes at the end.
+- **`<topic>_Teacher.docx`** — each sample answer in purple, in a shaded box the same size as the student's answer box (so both versions line up page for page), plus facilitation notes at the end.
 - **`<topic>_Student.docx`** — the same activity with answers replaced by answer boxes (sized to the expected answer, growing as students type, monospace for code) and facilitation notes removed.
 
 Both are built from a single editable source, **`<topic>_Teacher.md`**, which is delivered alongside them. The bundled [generate_student_version.py](scripts/generate_student_version.py) derives the student Markdown from it, and [build_docx.js](scripts/build_docx.js) (Node, using the `docx` package) converts both to Word. To revise an activity, edit the teacher Markdown and rebuild; never edit the Word files by hand.
@@ -42,34 +42,35 @@ Both are built from a single editable source, **`<topic>_Teacher.md`**, which is
 
 Download the prebuilt skill package here: **[pogil-activity-writer.zip](https://github.com/ChrisMayfield/claude-skills/releases/download/skills-latest/pogil-activity-writer.zip)** (automatically built from this repository).
 
-Only Claude currently supports uploading a skill in the native `SKILL.md` format. For ChatGPT and Gemini, you recreate the same behavior as a Custom GPT or a Gem by pasting `SKILL.md` as the system instructions and attaching the script as a reference file. The conversational backward-design workflow works on all three; the Word output depends on the platform being able to run the bundled Python and Node scripts (reliable in Claude with code execution; on ChatGPT/Gemini, expect Markdown output or a less faithful conversion).
+The package follows the open [Agent Skills](https://agentskills.io/) format, which Claude, ChatGPT, and Gemini can all import. The conversational backward-design workflow works on every platform. The Word output requires the platform to run the bundled Python and Node scripts. It has been tested in Claude; on other platforms, expect Markdown output or a less faithful conversion.
 
 ### Claude
 
-Claude reads the `SKILL.md` format directly, so you can upload the zip archive as-is.
+1. Turn on code execution: in **Settings → Capabilities**, enable **Code execution and file creation**. (On Team and Enterprise plans, an owner controls this in the organization settings.)
+2. Go to [**Customize → Skills**](https://claude.ai/customize/skills).
+3. Click the `+` button, then **Create skill**, then **Upload a skill**, and choose the zip file.
+4. Make sure the skill's toggle is on.
+5. Start a conversation and ask for a guided inquiry activity on your topic. The skill loads automatically when it is relevant.
 
-1. Go to [**Customize → Skills**](https://claude.ai/customize/skills). (Requires a plan with Skills and code execution enabled.)
-2. Click the `+` button, then Create Skill, then Upload a skill.
-3. Start a conversation and ask for a guided inquiry activity on your topic — the skill loads automatically when relevant.
+### Claude Code
 
-For Claude Code, place the `pogil-activity-writer/` folder in `~/.claude/skills/` (personal) or `.claude/skills/` (project-scoped).
+Unzip the package into `~/.claude/skills/` (personal) or `.claude/skills/` (project-scoped), so that the path is `.../skills/pogil-activity-writer/SKILL.md`. To build and check the Word files locally, you also need Python 3, Node.js with the `docx` package (`npm install docx`), LibreOffice, and `pdftoppm` (from Poppler).
 
-### ChatGPT (Custom GPT)
+### ChatGPT
 
-ChatGPT has no native skill format, so recreate the skill as a Custom GPT. Requires ChatGPT Plus, Team, or Enterprise. You'll need `SKILL.md` and `scripts/generate_student_version.py` — both are inside the skill package zip.
+ChatGPT supports uploaded skills on eligible Business, Enterprise, Healthcare, and Edu plans; your workspace admin may need to allow skill uploads.
 
-1. Go to [chatgpt.com/gpts](https://chatgpt.com/gpts) and click **Create**, then open the **Configure** tab.
-2. Give it a name and short description.
-3. Open `SKILL.md`, copy everything **below** the YAML frontmatter (the `---` block at the top), and paste it into the **Instructions** field.
-4. Under **Knowledge**, upload `scripts/generate_student_version.py` so the GPT can apply or reproduce the student-version transformation. Enable **Code Interpreter & Data Analysis** under Capabilities if you want it to actually run the script.
-5. Save, then test by asking for a guided inquiry activity on a sample topic.
+1. In the sidebar, select **Plugins**, then open the **Skills** tab.
+2. Select **Create**, then **Upload from your computer**, and choose the zip file.
+3. ChatGPT scans the upload. If the skill is marked *Needs Review*, review it before use.
 
-### Gemini (Gem)
+On Free, Plus, and Pro plans, skills are not available. A Custom GPT is not a good substitute: `SKILL.md` is about 37,000 characters, well over the 8,000-character limit for GPT instructions.
 
-Gemini's equivalent is a Gem. Creating Gems is done in the Gemini web app.
+### Gemini
 
-1. In Gemini, open the menu and choose **Gems → New Gem**.
-2. Name the Gem.
-3. Open `SKILL.md`, copy everything **below** the YAML frontmatter, and paste it into the **Instructions** field.
-4. Under **Knowledge**, click **Add files** and upload `scripts/generate_student_version.py`.
-5. Click **Save**, then open the Gem and request an activity on a sample topic.
+Gemini skills are rolling out gradually (starting October 2026) and require a personal Google account. Work and school accounts are not yet supported.
+
+1. At [gemini.google.com](https://gemini.google.com), open **Settings → Skills**.
+2. Click **Upload**, select the zip file, then click **Create** after reviewing the skill.
+
+Gemini skills cannot run scripts that need internet access, so `npm install docx` will fail unless the package is already available. If it fails, expect Markdown output only.
