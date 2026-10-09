@@ -6,7 +6,7 @@
 
 - **Classify `&nbsp;` lines before anything else touches them.** An indented `&nbsp;` is student writing space; an un-indented one is a section separator, unless an `<!-- answer -->` or `<!-- answer: code -->` comment comes first. The student script adds `<!-- answer -->` before the writing space of an un-indented sample (the Problem), which would otherwise read as separators. A generic Markdown converter discards both the indentation and the comments.
 - **Question numbers are literal text** followed by a tab, in a paragraph with a hanging indent. The tab must be a real `<w:tab/>` element (docx-js `new Tab()`), with an explicit tab stop at the hanging indent: Google Docs dropped a `\t` written inside the text, which ran "1.Which" together and left the hanging indent showing only from line 2. Word's list numbering is not used: renderers restart lists or ignore start values, and in one attempt every question printed as "1." Literal numbers also keep global numbering (Model 2 continuing from Model 1) exactly as written.
-- The script is a purpose-built reader for the shape this skill writes, not a general Markdown parser. It handles headings, paragraphs, bullets, numbered questions, lettered sub-items, blockquote samples (including fenced code inside them), fenced code, pipe tables, `![alt](file.png)` images on their own line, and HTML comments (ignored, except the code-answer marker). If an activity needs something else, extend the reader rather than working around it in the Markdown.
+- The script is a purpose-built reader for the shape this skill writes, not a general Markdown parser. It handles headings, paragraphs, bullets, numbered questions, lettered sub-items, blockquote samples (including fenced code inside them), fenced code, pipe tables, `![alt](file.png)` images on their own line, and HTML comments (ignored, except the two answer markers). If an activity needs something else, extend the reader rather than working around it in the Markdown.
 
 ## Answer boxes
 
@@ -23,7 +23,7 @@
 The two documents match page for page up to the Facilitation Notes, so an instructor can lay them side by side. Three things make that work:
 
 - **The teacher sample is printed in a box of the same height**, with no borders except a blue left edge, which does not affect the height. `writingLinesFor()` in `build_docx.js` is a copy of `writing_lines_for()` in the student script; if you change one, change the other.
-- **A sample fits its box.** The line count is never less than the printed lines the sample wraps to (`WRAP_CHARS`). Without this floor, a 120-character sample overflowed its two-line box (back when boxes could grow, it pushed every later question down; now it would be cut off). The estimate can still fall short for a sample with many short lines or wide characters. The author then adds an empty `>` line to the sample, once for each line of room needed; both scripts add one line to both boxes per empty `>` line outside a code fence.
+- **A sample fits its box.** The line count is never less than the printed lines the sample wraps to (`WRAP_CHARS`). Without this floor, a 120-character sample overflowed its two-line box. The estimate can still fall short for a sample with many short lines or wide characters. The author then adds an empty `>` line to the sample, once for each line of room needed; both scripts add one line to both boxes per empty `>` line outside a code fence.
 - **The separator after a sample is dropped in both versions.**
 
 After changing either script, check alignment: the row heights in the two `document.xml` files should be identical in order, and each question number should land at the same position in both PDFs (`pdftotext -bbox-layout`).
@@ -36,11 +36,14 @@ After changing either script, check alignment: the row heights in the two `docum
 - **Code blocks** are shaded, and every line but the last keeps with the next, so a block never splits.
 - **Table columns** are sized to their longest cell, at `TABLE_CHAR` per character plus `TABLE_CELL_PAD` for margins and slack; a tighter estimate wrapped short headers (`team_i` / `d`). If a table would be wider than the text column, `fitColumns()` shrinks the widest columns first, so only long text wraps.
 - **Tables** have DXA column widths on both the table and each cell (renderers disagree about which one they honor), rows that cannot split, and keep-with-next on every row but the last, so small data tables stay whole.
-- **Answers are blue in both versions** (`ANSWER_COLOR`, the heading blue `1F4D78`), so they are easy to tell from the black questions: teacher samples in a shaded box with a blue left edge, and whatever a student types. Samples have no "Sample:" label; the label exists only in the Markdown, as the student script's marker. One accent color for headings and answers keeps the page from looking busy; headings are bold and larger, so the two are not confused. The blue is 8.8:1 on white and 8.4:1 on the `FAFAFA` shading (WCAG AAA). Purple `7B1FA2` was used before. Red read as errors at a glance, and green reaches AAA contrast only when so dark it is hard to tell from black, especially with red-green color vision deficiency. A brighter blue such as `2E74B5` stands out more but only just passes AA (4.7:1 on the shading); keep any replacement at 7:1.
 
 ## Type
 
 Body text is Calibri 11pt. Headings are bold, 16pt, 14pt, and 12pt for levels 1 to 3. Code is Consolas 9pt, which looks about as large as Calibri 11pt because Consolas has a larger x-height. Table text is 10pt. Sample answers are the same size as body text, so if the body size changes, check that `WRAP_CHARS` still matches how many characters fit on a printed sample line; an underestimate cuts off the end of a teacher sample.
+
+## Color
+
+Answers are blue in both versions (`ANSWER_COLOR`, the heading blue `1F4D78`), so they are easy to tell from the black questions: teacher samples in a shaded box with a blue left edge, and whatever a student types. Samples have no "Sample:" label; the label exists only in the Markdown, as the student script's marker. One accent color for headings and answers keeps the page from looking busy; headings are bold and larger, so the two are not confused. The blue is 8.8:1 on white and 8.4:1 on the `FAFAFA` shading (WCAG AAA). Red read as errors at a glance, and green reaches AAA contrast only when so dark it is hard to tell from black, especially with red-green color vision deficiency. A brighter blue such as `2E74B5` stands out more but only just passes AA (4.7:1 on the shading); keep any replacement at 7:1.
 
 ## Accessibility
 

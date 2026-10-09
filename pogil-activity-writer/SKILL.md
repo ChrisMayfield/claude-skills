@@ -27,7 +27,7 @@ This shapes how Claude talks about the work, in three places:
 
 - **In the activity itself** (title, Why?, model descriptions, question text — any prose Claude writes into the deliverable): never use the word POGIL. Use neutral terms like *"this activity"* or *"this guided inquiry activity."* A good title is topic-focused (e.g., *"Enzyme Kinetics: How Does Reaction Rate Depend on Substrate?"*), never something like *"POGIL Activity: Enzyme Kinetics."*
 - **In conversation with the user** while drafting: refer to the draft as *"your activity,"* *"this learning cycle activity,"* or similar — not *"your POGIL activity."* It is fine if the user uses the shorthand themselves; Claude just doesn't echo it back.
-- **In filenames**: just the topic slug and the role suffix. No "pogil" or "activity" in the filename (this is a trademark requirement, not an aesthetic one).
+- **In filenames**: just the topic slug and the role suffix (see Output format). No "pogil" or "activity" in the filename; this is a trademark requirement, not an aesthetic one.
 
 Reserve the phrase *"POGIL activity"* for materials that have actually been endorsed by The POGIL Project.
 
@@ -124,7 +124,7 @@ For each learning cycle, write the **key question** — the moment where student
 - "In one sentence, explain why ___."
 - "Complete the following statement: A reaction is exothermic when ___."
 
-The key question is where **new terminology is introduced**, not assumed. If the activity is teaching "exothermic," that exact word should not appear in the model or earlier questions — only in or after the key question.
+The key question is where **new terminology is introduced**, not assumed (see "Don't introduce terminology before students invent it" below).
 
 ### Step 6 — Design the model
 
@@ -142,7 +142,7 @@ A good model:
 
 - **Fits on approximately one printed page.** A model that spills onto a second page is too much — students lose the thread between the data and the questions. If the model is growing large, split it across two learning cycles rather than cramming it into one.
 - **Contains only what students need for this learning cycle.** Don't include tables, columns, schema elements, or data that aren't referenced until a later model. Presenting unused material creates noise and signals to students that they're supposed to use it — which sends them down dead ends. Each model should be self-contained: everything in it is needed, and nothing in it is extra.
-- **Provides enough exemplars for inference.** A single example is rarely enough for students to spot a pattern. 3–5 contrasting cases is common. Show variation along the dimension that matters — and ideally, include cases that are similar in irrelevant ways so students have to identify the right feature.
+- **Provides enough contrasting exemplars for inference.** A single example is rarely enough for students to spot a pattern; "here are five reactions, three of which release energy and two of which absorb it" is. 3–5 contrasting cases is common. Ask what would change if the concept were false, and make sure the model contains cases that distinguish. Show variation along the dimension that matters — and ideally, include cases that are similar in irrelevant ways so students have to identify the right feature.
 - **Uses standard representations** for the field.
 - **Is clear, concise, and visually clean.** No distracting information.
 - **Does not state the concept being developed.** In a Learning Cycle activity, the model shows the evidence for the concept, not the concept itself.
@@ -154,11 +154,9 @@ A good model:
 
 Describe the model concretely. If it's a table, write the table out in Markdown. If it's code or data, include the code or data inline.
 
-For diagrams and charts, prefer **Mermaid** code blocks (` ```mermaid ... ``` `) — they render natively in GitHub, VS Code (with the standard Markdown preview), and most modern Markdown viewers, so the diagram lives in the document itself rather than requiring the author to draw it separately. Mermaid supports over two dozen diagram types — flowcharts, state machines, sequence diagrams, class and ER diagrams, xy/bar/pie charts, timelines, and mindmaps are common examples; consult the Mermaid documentation for the full list and current syntax.
+For diagrams and charts, prefer **Mermaid** code blocks (` ```mermaid ... ``` `), so the diagram lives in the Markdown source rather than requiring the author to draw it separately. Mermaid covers flowcharts, state machines, sequence, class, and ER diagrams, xy/bar/pie charts, timelines, and more; consult its documentation for current syntax. Because the deliverables are Word documents, render each Mermaid block to a PNG before the build (for example with `mmdc`, if available) and reference it as `![description](figure.png)`; the build script prints a Mermaid block as source text and warns. If rendering isn't possible, tell the user which figure needs to be drawn.
 
-Because the deliverables are Word documents, a Mermaid block must be rendered to a PNG before the build (for example with `mmdc`, if available) and referenced as `![description](figure.png)`; the build script prints a Mermaid block as source text and warns. If rendering isn't possible, tell the user which figure needs to be drawn.
-
-Fall back to prose description (detailed enough that the author could draw the figure) only when the diagram is outside what Mermaid can express well — e.g., labeled anatomical figures, electrical circuits, free-form scientific schematics, photographs, or charts with custom annotations. For an ASCII sketch (as in the rate-vs-[S] curve sketch in the enzyme kinetics example), a fenced code block is fine.
+Fall back to prose description (detailed enough that the author could draw the figure) only when the diagram is outside what Mermaid can express well — e.g., labeled anatomical figures, electrical circuits, free-form scientific schematics, photographs, or charts with custom annotations. A simple ASCII sketch in a fenced code block is also fine.
 
 ### Step 7 — Concept invention questions
 
@@ -203,7 +201,7 @@ So as you draft, think of Steps 6–8 as design *checks* — does my sequence in
 
 ### Step 9 — Sample answers (inline)
 
-For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with two parts: a marker line (`> ***Sample:***<br>`) carrying nothing but the label, and one or more blockquote lines below it carrying the answer text. Follow every question with an indented `&nbsp;` line as trailing breathing room (full details in the Output format section's convention #3). This is the format:
+For every question in the activity, write a sample answer **from the perspective of a student team**, not an expert. Place the answer **directly under the question it answers**, formatted as a Markdown blockquote with two parts: a marker line (`> ***Sample:***<br>`) carrying nothing but the label, and one or more blockquote lines below it carrying the answer text. Follow every question with an indented `&nbsp;` line as trailing breathing room (see convention #3 under Output format). This is the format:
 
 ```markdown
 3. As [S] increases from 20 mM to 100 mM, by roughly what factor does the rate increase?
@@ -257,7 +255,7 @@ Student-team answers:
 
 Walk through this checklist with the user before finalizing:
 
-- Does each learning cycle's question sequence cover all three phases (orient to the model → drive inference → apply the new concept)? Note: these are design phases the author checks for, **not** headings in the document.
+- Does each learning cycle's question sequence cover all three phases (orient to the model → drive inference → apply the new concept)?
 - Are concepts introduced *only after* students invent them (not pre-named in the model or in early questions)?
 - Is the model rich enough to support the inference it asks for? Does it vary along the dimension the concept hinges on, with enough cases to make a pattern visible? (Single examples rarely work.)
 - Are the early, orienting questions short and directed?
@@ -284,7 +282,7 @@ Paths in this step:
 - `<out>` is where the user receives files. In Claude.ai, that is `/mnt/user-data/outputs/`. In Claude Code or another local agent, use the current working directory unless the user names another folder. Elsewhere, use whatever location the platform offers for downloadable files.
 - `<work>` is a scratch directory for intermediates (the student Markdown, PDFs, page images). Use the platform's scratch or temp directory, not `<out>`, so the user's folder holds only the deliverables.
 
-Write the Teacher file to `<out>/<slug>_Teacher.md` (see Output format for naming), then run:
+Write the teacher file to `<out>/<slug>_Teacher.md` (see Output format for naming), then run:
 
 ```bash
 python3 <skill>/scripts/generate_student_version.py <out>/<slug>_Teacher.md <work>/<slug>_Student.md
@@ -294,7 +292,7 @@ node <skill>/scripts/build_docx.js <work>/<slug>_Student.md <out>/<slug>_Student
 
 (`build_docx.js` picks teacher or student mode from the filename suffix. It needs the `docx` npm package. If `require` fails, install the package without adding files to the user's folder: `npm install --prefix <work> docx`, then rerun with `NODE_PATH=<work>/node_modules`. If installation isn't possible, for example with no network access, tell the user the Word files could not be built and deliver the teacher Markdown.)
 
-The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into answer boxes: blank space when printed, with a fixed height so typed answers cannot reflow the page. It prints each teacher sample in a box of the same size, so the two versions line up page for page. Both documents meet WCAG 2.1 AA (color contrast, heading styles, document title and language, image alt text), so give every image meaningful alt text.
+The student script drops the Facilitation Notes and replaces each sample with writing space sized to the answer. The build script turns that writing space into fixed-height answer boxes, blank when printed, and prints each teacher sample in a box of the same size, so the two versions line up page for page. Both documents meet WCAG 2.1 AA, so give every image meaningful alt text.
 
 Do not produce either derived file by hand, and do not use a generic Markdown-to-Word converter: it strips the indentation that distinguishes writing space (indented `&nbsp;`) from section separators (un-indented `&nbsp;`), which in one attempt silently removed all of the writing space. Read `<skill>/references/docx-layout.md` before changing the build script or if a page looks wrong.
 
@@ -308,36 +306,29 @@ Do not produce either derived file by hand, and do not use a generic Markdown-to
 
 If a page is ambiguous at that size, render it alone at higher resolution (`pdftoppm -r 100 -f N -l N`). Fix a layout problem in the build script and a content problem (a model that runs past a page) in the teacher Markdown, then rebuild. **Never edit the `.docx` files directly**; they are rebuilt from the Markdown every time. If LibreOffice or `pdftoppm` is unavailable, tell the user the visual check could not be done rather than skipping it silently.
 
-When the pages look right, give the user the Teacher `.docx`, the Student `.docx`, and the Teacher `.md` (the editable source), in that order. Use the platform's file-sharing tool if it has one (in Claude.ai, `present_files`); otherwise, list the three paths in `<out>`.
+When the pages look right, give the user the teacher `.docx`, the student `.docx`, and the teacher `.md` (the editable source), in that order. Use the platform's file-sharing tool if it has one (in Claude.ai, `present_files`); otherwise, list the three paths in `<out>`.
 
 ## Output format
 
-The deliverables are two Word documents in `<out>` (see Step 11), US Letter, printable without hand-fixing and suitable for uploading to Google Docs:
+The deliverables are two US Letter Word documents in `<out>`, printable without hand-fixing and suitable for uploading to Google Docs:
 
-- `<topic-slug>_Teacher.docx` — each sample answer in blue, in a shaded box the same size as the student's; facilitation notes at the end.
-- `<topic-slug>_Student.docx` — blank space for writing in place of each answer; facilitation notes removed.
+- `<slug>_Teacher.docx` — each sample answer in blue, in a shaded box the same size as the student's; facilitation notes at the end.
+- `<slug>_Student.docx` — blank space for writing in place of each answer; facilitation notes removed.
 
-Both are built from `<topic-slug>_Teacher.md`, which Claude writes and which stays the single editable, diffable source; deliver it alongside the Word files. All content edits go into the teacher Markdown, followed by a rebuild.
+Both are built from `<slug>_Teacher.md`, the single editable source, which is delivered alongside them. All content edits go into the teacher Markdown, followed by a rebuild.
 
-`<topic-slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`). The filenames must **not** include the words "pogil" or "activity" — just the topic slug, an underscore, and the role suffix. (This is a trademark requirement; see the "About the POGIL trademark" section above.)
+`<slug>` is a short kebab-case version of the topic (e.g., `enzyme-kinetics`, `valence-electrons`, `for-loops`), with no "pogil" or "activity" (see "About the POGIL trademark").
 
-Formatting conventions for the Teacher Markdown (the scripts handle everything downstream):
+Formatting conventions for the teacher Markdown (the scripts handle everything downstream):
 
-1. **No question-category headings.** Under each model is a single numbered list of questions — no `### Exploration` / `### Concept invention` / `### Application` subheadings. (See the "*A critical point about Exploration / Invention / Application*" subsection earlier for why.)
-2. **Sample answers inline, bold-italic label on its own line.** Every question is followed immediately by its sample answer, formatted as a two-part blockquote: a marker line (`> ***Sample:***<br>`) and the answer text on the line(s) below:
-
-   ```
-   3. Question text here?
-      > ***Sample:***<br>
-      > Student-team-voice answer here.
-   ```
-
-3. **Vertical breathing room after every question.** The `&nbsp;` separator belongs to the question above it (it is the question's trailing breathing room), not to the gap between questions. Indent it to match the indentation of the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This rule applies to **every** numbered item, including the last question of each model (before the next `## Model` heading) and the last exercise (before `## Problem`). Also insert an un-indented `&nbsp;` between each model's content (table, diagram, code block, etc.) and the first question, so the questions are visually set apart from the model they reference.
-4. **No `---` horizontal rules between sections.** Use a standalone `&nbsp;` line instead. VS Code and GitHub already render a horizontal rule visually after level-1 and level-2 headings, so an explicit `---` produces a doubled rule that hurts readability. The `&nbsp;` just inserts a blank line of breathing room.
+1. **No question-category headings.** Under each model is a single numbered list of questions — no `### Exploration` / `### Concept invention` / `### Application` subheadings (see "A critical point about Exploration / Invention / Application").
+2. **Sample answers inline.** Every question is followed immediately by its sample answer: the exact marker line `> ***Sample:***<br>`, then the answer on the `> ` line(s) below (see Step 9).
+3. **An `&nbsp;` line after every question.** It belongs to the question above it, so indent it to match the question's content — 3 spaces under a top-level `1.` item; 7 spaces under a sub-item like `    a.`. This applies to **every** numbered item, including the last question of each model and the last exercise. Also put an un-indented `&nbsp;` between each model's content (table, diagram, code block, etc.) and its first question.
+4. **No `---` horizontal rules between sections.** Use a standalone un-indented `&nbsp;` line instead; GitHub and VS Code already draw a rule under level-1 and level-2 headings, so `---` doubles it.
 5. **Global question numbering.** Number questions continuously across the whole activity: if Model 1 ends at question 7, Model 2 begins at 8. Cross-references always use the global number ("Using your answers to questions 9 through 12…"), so a question number identifies one question anywhere in the document and in class discussion. Exercises are numbered separately, starting from 1 under their own heading. Write each number literally (`8.`, not `1.` relying on auto-numbering); the build script keeps numbers exactly as written.
 6. **Model headings start with `## Model N:`** and the facilitation section with `# Facilitation Notes`. The build script starts a new page at exactly these headings.
 
-Here is the Teacher template:
+Here is the teacher template:
 
 ```markdown
 # [Activity Title — topic-focused; do not include the word "POGIL"]
@@ -466,13 +457,11 @@ they will be able to do by the end. Connects to what they've learned and what's 
 - [A prompt the instructor gives a team that has finished everything, including any optional question; often sets up the next class]
 ```
 
-After the files are built and checked, briefly summarize what's in the activity and offer to revise any section. If the user requests changes, edit the Teacher Markdown and re-run the whole pipeline in Step 11, including the visual check.
+After the files are built and checked, briefly summarize what's in the activity and offer to revise any section. If the user requests changes, edit the teacher Markdown and re-run the whole pipeline in Step 11, including the visual check.
 
 ## A few important nuances
 
 **Don't introduce terminology before students invent it.** If the activity teaches "valence electron," that phrase shouldn't appear in the model or in exploration questions — only in or after the key question. This is the single most common mistake in drafts of guided inquiry activities. The model should contain *evidence* for the concept, presented in everyday or pre-existing terminology; the new term is the thing the students are about to coin.
-
-**Models need contrast.** "Here is one example of an exothermic reaction" is not a sufficient model for a guided inquiry activity. "Here are five reactions, three of which release energy and two of which absorb it, with the energy values" is, because the student can see the pattern. When choosing examples for a model, ask: what would change if the concept were false? Make sure the model contains cases that distinguish.
 
 **Questions should be a sequence, not a list.** Each question should rest on the answers to the previous ones, building toward the key question. If you could shuffle the questions and they'd still work, the sequence isn't doing enough work.
 

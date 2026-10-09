@@ -6,8 +6,7 @@
 //     node build_docx.js <input.md> <output.docx> [--teacher | --student]
 //
 // The mode comes from the input filename (`_Teacher.md` or `_Student.md`) unless a
-// flag overrides it. Requires the `docx` package (npm install docx, or install it
-// elsewhere with --prefix and point NODE_PATH at its node_modules).
+// flag overrides it. Requires the `docx` npm package.
 //
 // This is a purpose-built reader for the Markdown this skill writes, not a general
 // parser. The reasons behind its layout rules are in references/docx-layout.md.
@@ -46,10 +45,8 @@ const QUESTION_INDENT = { left: 400, hanging: 400 };
 const BODY_INDENT = { left: 400 };
 const SUBITEM_INDENT = { left: 700 };
 
-// Answer boxes: one-cell tables sized in proportion to the answer, with an exact
-// row height in both versions, so a box never grows (when a student types, or when
-// a sample is longer than estimated) and the two versions always line up. Tune
-// these if pages do not pack.
+// Answer boxes: one-cell tables with an exact row height, the same in both
+// versions. Tune BOX_BASE and BOX_PER_LINE if pages do not pack.
 const BOX_BASE = 100;          // DXA
 const BOX_PER_LINE = 360;      // DXA per writing-space line (0.25 in)
 const CODE_BOX_MIN_LINES = 4;  // code answers need room for several lines
@@ -57,6 +54,7 @@ const CODE_BOX_MIN_LINES = 4;  // code answers need room for several lines
 // it: about 1em (11pt = 220 DXA) from the question to the student's writing.
 const BOX_GAP = 160;           // DXA
 const BOX_ABOVE = 60 + BOX_GAP; // total space above a box
+const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: "auto" };
 
 // The space-before of the block a line starts, so the gap after a box can top it
 // up to at least BOX_ABOVE. Keep in step with the builders' spacing.before.
@@ -70,10 +68,8 @@ function spaceBefore(line) {
   if (/^\s*[-*]\s/.test(line)) return 20;
   return 40;
 }
-const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: "auto" };
 
-// Each teacher sample sits in a box the same height as the student's, so the two
-// versions line up page for page. writingLinesFor() must stay in step with
+// Box sizing. These constants and writingLinesFor() must stay in step with
 // writing_lines_for() in generate_student_version.py.
 const CHARS_PER_LINE = 70;
 const MIN_WRITING_LINES = 2;
@@ -93,12 +89,9 @@ const SAMPLE_MARKER = /^(\s*)>\s*(.*?)\*\*\*Sample\b[^*]*\*\*\*(.*?)\s*$/;
 const CANONICAL_MARKER = /^\s*> \*\*\*Sample:\*\*\*<br>\s*$/;
 
 // Colors meet WCAG 2.1 AA: text at least 4.5:1 against its background, and lines
-// that mark out content at least 3:1 against white. Check any replacement with
-// contrastRatio() below. Answers, both teacher samples and what students type, are
-// the heading blue: 8.8:1 on white and 8.4:1 on the sample shading (WCAG AAA), and
-// still easy to tell from black. See the reference for why not red or green.
+// that mark out content at least 3:1 against white. The check below enforces this.
 const HEADING_COLOR = "1F4D78";  // 8.8:1 on white
-const ANSWER_COLOR = HEADING_COLOR;
+const ANSWER_COLOR = HEADING_COLOR; // 8.4:1 on SAMPLE_FILL
 const SAMPLE_FILL = "FAFAFA";
 const FOOTER_COLOR = "595959";   // 7.0:1 on white
 const CODE_FILL = "F4F4F4";      // black text 19:1
@@ -250,17 +243,6 @@ function parseSample(rawLines) {
   return { items, code, lines: writingLinesFor(sampleText, wrapped) + extra };
 }
 
-// A paragraph inside an answer box. Teacher samples and the empty paragraph a
-// student types into share this formatting, so typed text matches the sample:
-// body text, or code at the size and spacing of the code blocks.
-// Word gives typed text the formatting of an empty paragraph's mark, but Google
-// Docs ignores it and types in its default font and color. A space in the box's
-// font and the answer color gives typed text something to inherit in both.
-// (A zero-width space also worked, but LibreOffice marks each one on screen.)
-function seedRun(code) {
-  return new TextRun({ text: " ", ...answerRun(code) });
-}
-
 // The formatting of answer text: body text or code, in the answer color.
 function answerRun(code) {
   return code
@@ -268,6 +250,14 @@ function answerRun(code) {
     : { font: BODY_FONT, size: BODY_SIZE, color: ANSWER_COLOR };
 }
 
+// A space for typed text to inherit its formatting from; Google Docs ignores the
+// formatting of an empty paragraph.
+function seedRun(code) {
+  return new TextRun({ text: " ", ...answerRun(code) });
+}
+
+// A paragraph inside an answer box. Teacher samples and the paragraph a student
+// types into share this formatting, so typed text matches the sample.
 function answerParagraph(code, children = []) {
   return new Paragraph({
     children,
@@ -477,6 +467,12 @@ const COMMENT = /^\s*<!--.*-->\s*$/;
 const SEPARATOR = /^&nbsp;\s*$/;
 const BLOCK_START = /^(\s*```|\s*\||#{1,4}\s|\s*[-*]\s|\s*>|\s*\d+\.\s|\s*[a-z]\.\s|\s*!\[)/;
 
+// The index of the first non-blank line at or after i (lines.length if none).
+function nextLine(lines, i) {
+  while (i < lines.length && !lines[i].trim()) i++;
+  return i;
+}
+
 function convert(mdPath, student) {
   const lines = fs.readFileSync(mdPath, "utf8").replace(/\r\n/g, "\n").split("\n");
   const baseDir = path.dirname(mdPath);
@@ -542,11 +538,10 @@ function convert(mdPath, student) {
       if (student) {
         const pad = line.match(/^\s*/)[0];
         let count = 1;
-        let j = i + 1;
-        for (;;) {
-          while (j < lines.length && !lines[j].trim()) j++;
-          if (j < lines.length && NBSP.test(lines[j])
-            && lines[j].match(/^\s*/)[0] === pad) { count++; j++; } else break;
+        let j = nextLine(lines, i + 1);
+        while (j < lines.length && NBSP.test(lines[j]) && lines[j].match(/^\s*/)[0] === pad) {
+          count++;
+          j = nextLine(lines, j + 1);
         }
         i = j - 1;
         answerBox(count, code, undefined, indented, lines[j]).forEach(add);
@@ -580,12 +575,10 @@ function convert(mdPath, student) {
       if (SAMPLE_MARKER.test(raw[0])) {
         const sample = parseSample(raw);
         // Skip the separator after the sample, as the student script does.
-        let j = i + 1;
-        while (j < lines.length && !lines[j].trim()) j++;
-        if (j < lines.length && /^\s*&nbsp;\s*$/.test(lines[j])) i = j;
-        let next = i + 1;
-        while (next < lines.length && !lines[next].trim()) next++;
-        answerBox(sample.lines, sample.code, sampleParagraphs(sample.items), indented, lines[next])
+        const j = nextLine(lines, i + 1);
+        if (j < lines.length && NBSP.test(lines[j])) i = j;
+        const next = lines[nextLine(lines, i + 1)];
+        answerBox(sample.lines, sample.code, sampleParagraphs(sample.items), indented, next)
           .forEach(add);
       } else {
         quoteBlock(raw.map((t) => t.replace(/^\s*>\s?/, "")), indented).forEach(add);
@@ -616,8 +609,7 @@ function convert(mdPath, student) {
     }
     // A paragraph introduces what follows it, so it keeps with it unless a
     // separator or heading comes next.
-    let k = i + 1;
-    while (k < lines.length && !lines[k].trim()) k++;
+    const k = nextLine(lines, i + 1);
     const endsSection = k >= lines.length || SEPARATOR.test(lines[k]) || /^#{1,4}\s/.test(lines[k]);
     add(para(buf.join(" "), {
       indent: indented ? BODY_INDENT : undefined,

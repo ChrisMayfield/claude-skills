@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Generate the student-facing version of a POGIL activity from the teacher version.
+Generate the student version of an activity from the teacher version.
 
 Usage:
-    python generate_student_version.py <path-to-teacher-md> [<path-to-student-md>]
+    python3 generate_student_version.py <path-to-teacher-md> [<path-to-student-md>]
 
 Produces the student file at the given path, or by default in the same directory,
 with `_Teacher.md` in the filename replaced by `_Student.md`.
@@ -13,13 +13,11 @@ Transformations:
     2. Every sample block (a `> ***Sample:***<br>` marker line and the `> ` answer
        lines below it) is replaced with `&nbsp;` lines of writing space, indented
        like the sample, as many as the answer is long, plus one for each empty `>`
-       line outside a code fence (the author's way to enlarge both boxes). Writing
-       space for an un-indented sample (the Problem) gets an `<!-- answer -->`
-       comment before it, since the Word builder otherwise reads an un-indented
-       `&nbsp;` as a separator. A marker line with extra text on it is still
-       consumed, with a warning, so the answer cannot leak. A sample containing a
-       fenced code block gets an `<!-- answer: code -->` comment before its writing
-       space, which makes its Word answer box monospace.
+       line outside a code fence. A marker line with extra text on it is still
+       consumed, with a warning, so the answer cannot leak. The writing space gets
+       an `<!-- answer: code -->` comment before it if the sample contains a fenced
+       code block, or an `<!-- answer -->` comment if it is un-indented (the
+       Problem), which the Word builder would otherwise read as separators.
     3. The `&nbsp;` separator that followed each sample is removed.
     4. A blank line is inserted between the question text and the writing space,
        unless one is already there.
@@ -41,7 +39,7 @@ MAX_WRITING_LINES = 8
 WRAP_CHARS = 90
 
 
-def writing_lines_for(sample_text: str, rendered_lines: int = 0) -> int:
+def writing_lines_for(sample_text: str, rendered_lines: int) -> int:
     """Return how many `&nbsp;` lines of writing space to leave for a sample.
 
     Proportional to the sample's length, clamped, but never fewer than the lines
@@ -67,6 +65,9 @@ CANONICAL_MARKER = re.compile(r"^\s*> \*\*\*Sample:\*\*\*<br>\s*$")
 CODE_ANSWER_MARKER = "<!-- answer: code -->"
 ANSWER_MARKER = "<!-- answer -->"
 
+NBSP = re.compile(r"^\s*&nbsp;\s*$")
+INDENTED_NBSP = re.compile(r"^\s+&nbsp;\s*$")
+
 
 def generate_student(teacher_text: str) -> str:
     """Apply the five transformations to teacher_text and return the student version."""
@@ -85,7 +86,6 @@ def generate_student(teacher_text: str) -> str:
         sample_match = SAMPLE_MARKER.match(line)
         if sample_match:
             indent = sample_match.group(1)
-            extra = (sample_match.group(2) + " " + sample_match.group(3)).replace("<br>", "")
             sample_text = ""
             if not CANONICAL_MARKER.match(line):
                 print(
@@ -93,7 +93,8 @@ def generate_student(teacher_text: str) -> str:
                     f"'> ***Sample:***<br>'; move other text to the next line: {line.strip()}",
                     file=sys.stderr,
                 )
-                sample_text = " " + extra.strip()
+                extra = sample_match.group(2) + " " + sample_match.group(3)
+                sample_text = " " + extra.replace("<br>", "").strip()
             i += 1
 
             # Consume the answer lines, measuring their length and the printed
@@ -115,8 +116,9 @@ def generate_student(teacher_text: str) -> str:
                 i += 1
 
             n = writing_lines_for(sample_text, rendered) + extra_lines
+            # 4. Leave a blank line between the question text and the writing space.
             if out and out[-1].strip():
-                out.append("")  # blank line between question text and writing space
+                out.append("")
             if is_code:
                 out.append(f"{indent}{CODE_ANSWER_MARKER}")
             elif not indent:
@@ -130,7 +132,7 @@ def generate_student(teacher_text: str) -> str:
             j = i
             while j < len(lines) and lines[j].strip() == "":
                 j += 1
-            if j < len(lines) and re.match(r"^\s*&nbsp;\s*$", lines[j]):
+            if j < len(lines) and NBSP.match(lines[j]):
                 out.append("")  # delimiter
                 i = j + 1
                 # Eat one trailing blank line if present, to avoid stacking blanks.
@@ -139,7 +141,7 @@ def generate_student(teacher_text: str) -> str:
             continue
 
         # 5. Leftover indented breathing room is not writing space; un-indent it.
-        if re.match(r"^\s+&nbsp;\s*$", line):
+        if INDENTED_NBSP.match(line):
             out.append("&nbsp;")
             i += 1
             continue
@@ -157,7 +159,7 @@ def generate_student(teacher_text: str) -> str:
 def main(argv: list[str]) -> int:
     if len(argv) not in (2, 3):
         print(
-            "Usage: python generate_student_version.py <path-to-teacher-md> [<path-to-student-md>]",
+            "Usage: python3 generate_student_version.py <path-to-teacher-md> [<path-to-student-md>]",
             file=sys.stderr,
         )
         return 2
